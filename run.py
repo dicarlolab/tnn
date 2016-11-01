@@ -9,7 +9,10 @@ import os, json, argparse
 import numpy as np
 import tensorflow as tf
 
-from tfutils import base, data
+# from tfutils import base, data
+## need to change data and base
+import data
+import base
 import model
 
 
@@ -114,7 +117,6 @@ def main(params):
     start_step = params['saver']['start_step'] if params['saver']['restore'] else 0
     end_step = params['num_epochs'] * params['num_train_batches']
 
-    print('UH, PARAMS[DATA] IS CURRENTLY:', params['data'])
     base.run_base(params,
              model_func=model.get_model,
              model_kwargs=model_func_kwargs,
