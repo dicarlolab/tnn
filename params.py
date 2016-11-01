@@ -22,7 +22,7 @@ num_train_images = 2**20
 num_valid_images = 2**14
 
 params = {
-    'seed': None,
+    'seed': 0, # None
     'thres_loss': 10000,
     # run configuration parameters
     'num_epochs': 90,  # number of epochs to train
@@ -31,7 +31,7 @@ params = {
     'features_layer': None,
 
     # add evaluation parameters
-    'eval': True,  # should evaluation be done during training
+    'eval': False,  # should evaluation be done during training
     # 'eval_avg_crop': False,  # only relevant during eval
     'num_train_batches': num_train_images // batch_size,
     'num_valid_batches': num_valid_images // batch_size,  # number of batches used in validation
@@ -55,10 +55,8 @@ params = {
         'end_step': None,
 
         # tensorboard
-        #'tensorboard': False,  # use tensorboard for graph visualization
-                              # (not activations)
-        'tensorboard_dir': restore_var_file + 'output'  # save tensorboard graph
-        # (None to not save tensorboard)
+        'tensorboard_dir': None #restore_var_file + 'output'  # save
+        # tensorboard graph (None to not save tensorboard)
     },
 
     'data': {  # image parameters
@@ -68,7 +66,7 @@ params = {
 
         'random_crop': True,  # only relevant during training
         # 'num_labels': 1000,  # number of unique labels in the dataset
-        'num_threads': 4,  # per tower
+        'num_threads': 1,  # per tower
         'batch_size': batch_size,  # to be split among GPUs. For train, eval
         'num_train_images': num_train_images,
         'num_valid_images': num_valid_images
@@ -83,9 +81,9 @@ params = {
         'weight_decay': .0005,  # None for no decay
         'init_weights': 'xavier',
         'dropout': .5,  # for training; config writes None for eval mode
-        'memory_decay': 0,  # just for Conv or ConvPool layers; float to use memory
-                          # Note: default weights, strides, etc -> adjust in ConvRNN.py
-                           # -1.1 initialize decay_factor t= sigmoid(-1.1) = 0.25
+        'memory_decay': None,  # just for Conv or ConvPool layers; float to use
+        #  memory
+        # -1.1 initialize decay_factor t= sigmoid(-1.1) = 0.25
 
         # bypass parameters
         # 'layers': LAYERS,
