@@ -222,7 +222,6 @@ def get_model(input_seq,
               dropout=None,
               memory_decay=None,
             #   initial_states=None,
-              num_labels=1000,
               trim_top=True,
               trim_bottom=True,
               features_layer=None,
@@ -245,7 +244,6 @@ def get_model(input_seq,
     :return: Returns a dictionary logits (output of a linear FC layer after
     all layers). {time t: logits} for t >= shortest_path and t < T_total}
     """
-
     # create networkx graph with layer #s as nodes
     if model_base == 'alexnet':
         mb = alexnet
@@ -369,6 +367,7 @@ def get_model(input_seq,
 
                 # fill in empty outputs with zeros since we index by t
                 out_first = []
+
                 for t in range(0, layer['first']):
                     out_first.append(
                         tf.zeros(shape=layer['cell'].output_size,
@@ -387,7 +386,7 @@ def get_model(input_seq,
     if features_layer is None:
         return graph.node[str(len(layers))]['outputs']
     else:
-        return graph[features_layer]['outputs']
+        return graph.node[features_layer]['outputs']
 
 
 def _construct_graph(layers, bypasses, batch_size):
