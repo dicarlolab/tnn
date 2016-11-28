@@ -11,6 +11,7 @@ from tensorflow.python.ops.rnn_cell import RNNCell
 from tfutils.model import ConvNet
 
 
+
 class ConvRNNCell(ConvNet, RNNCell):
 
     def __init__(self, output_size, state_size, seed=None, scope=None):
