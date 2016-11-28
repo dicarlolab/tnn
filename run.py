@@ -7,6 +7,8 @@ import tensorflow as tf
 import tfutils
 
 import model
+from alexnet import alexnet
+import support_functions
 
 
 host = os.uname()[1]
@@ -97,7 +99,7 @@ params = {
     'model_params': {
         'func': model.get_model,
         'seed': 2,
-        'model_base': model.alexnet,
+        'model_base': alexnet,
         'bypasses': [],#(1,5)],  # bypasses: list of tuples (from, to)
         'init_weights': 'xavier',
         'weight_decay': .0005,  # None for no decay
@@ -132,7 +134,7 @@ params = {
     },
 
     'loss_params': {
-        'func': model.get_loss,
+        'func': support_functions.get_loss,
         'target': 'labels',
         'loss_per_case_func': tf.nn.sparse_softmax_cross_entropy_with_logits,
         'agg_func': tf.reduce_mean,
