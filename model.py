@@ -1,8 +1,8 @@
 """
 The "model" function is used to create a TF graph given layers and bypasses
 
-The model function imports supplementary functions from other files, one function type
-per file for the most part
+The model function imports supplementary functions from other files, one 
+function type per file for the most part
 
 Let's do this
 """
@@ -17,6 +17,8 @@ from alexnet import alexnet
 from constructor import _construct_graph
 from support_functions import _first, _last, _maxpool, get_loss
 
+from complete_graph import _complete_graph
+
 
 
 def get_model(inputs,
@@ -24,7 +26,7 @@ def get_model(inputs,
               cfg_initial=None,
               seed=None,
               model_base=None,
-              bypasses=[],
+              bypasses=[], 
               init_weights='xavier',
               weight_decay=None,
               dropout=None,
@@ -39,15 +41,37 @@ def get_model(inputs,
               target='data'):
     """
     Creates model graph and returns logits.
+
+    :inputs: list for sequence of input images as tf Tensors
+
+    :train: specify if the current instance uses training or evaluation only
+    :cfg_initial:
+    :seed:
+    :model_base:
+    :bypasses:
+    :init_weights='xavier':
+    :weight_decay=None:
+    :dropout=None:
+    :memory_decay=None:
+    :memory_trainable=False:
+    :trim_top=True:
+    :trim_bottom=True:
+    :features_layer: if None (equivalent to a value of len(layers) + 1) ,
+                     outputs logitsfrom last FC. Otherwise, accepts a number 0 
+                     through len(layers) + 1 and _model will output the features 
+                     of that layer.
+    :bypass_pool_kernel_size=None:
+    :input_spatial_size=None:
+    :input_seq_len=1:
+    :target='data':
+
+
     model_base: string name of model base. (Ex: 'alexnet')
     :param layers: Dictionary to construct cells for each layer of the form
      {layer #: ['cell type', {arguments}] Does not include the final linear
      layer used to get logits.
     :param bypasses: list of tuples (from, to)
     :param inputs: list for sequence of input images as tf Tensors
-    :param features_layer: if None (equivalent to a value of len(layers) + 1) ,
-     outputs logitsfrom last FC. Otherwise, accepts a number 0 through
-     len(layers) + 1 and _model will output the features of that layer.
     :param initial_states: optional; dict of initial state {layer#: tf Tensor}
     :return: Returns a dictionary logits (output of a linear FC layer after
     all layers). {time t: logits} for t >= shortest_path and t < T_total}
@@ -134,39 +158,9 @@ def get_model(inputs,
                 layer['inputs'] = []  # list of inputs to layer j in time
                 parents = graph.predecessors(node)  # list of incoming nodes
 
-                # for relevant time points: gather inputs, pool, and concatenate
-                for t in range(layer['first'], layer['last'] + 1):
-                    # concatenate inputs (pooled to right spatial size) at time t
-                    # incoming_shape = layer_sizes[j - 1]['output']  # with no bypass
-                    # if node == 5 and t == 2: import pdb; pdb.set_trace()
-                    if len(layer['cell'].state_size) == 4:
-                        if n == 1:
-                            output_size = graph.node['0']['outputs'][0].get_shape().as_list()[1]
-                        else:
-                            output_size = graph.node[str(n-1)]['cell'].output_size[1]
-
-                        inputs_t = []
-                        for parent in sorted(parents):
-                            input_tp = _maxpool(
-                                input_=graph.node[parent]['outputs'][t - 1],
-                                out_spatial=output_size,
-                                kernel_size=bypass_pool_kernel_size,
-                                name='bypass_pool')
-                            inputs_t.append(input_tp)
-
-                        # concat in channel dim
-                        # import pdb; pdb.set_trace()
-                        layer['inputs'].append(tf.concat(3, inputs_t))
-
-                    else:  # if input is 2D (ex: after FC layer)
-                        # print('FC')
-                        # no bypass to FC layers beyond first FC
-                        if len(parents) != 1:
-                            raise ValueError('No bypass to FC layers '
-                                             'beyond first FC allowed')
-                        inputs_t = graph.node[parents[0]]['outputs'][t - 1]
-                        layer['inputs'].append(inputs_t)
-                    # print('inputs at t = {}: {}'.format(t, inputs_t))
+                ###
+                ### COMPLETE GRAPH GOES HERE
+                ###
 
                 # run tf.nn.rnn and get list of outputs
                 # Even if initial_states[j] is None, tf.nn.rnn will just set

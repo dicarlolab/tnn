@@ -58,13 +58,16 @@ class ConvRNNCell(ConvNet, RNNCell):
              memory_decay=0,
              memory_trainable=False,
              *args, **kwargs):
+        # Perform the convolution
         super(ConvRNNCell, self).conv(in_layer=inputs,
                                       out_shape=self.state_size[-1],
                                       activation=None,
                                       *args, **kwargs)
+        # Update the state
         self.state = self.memory(state,
                                  memory_decay=memory_decay,
                                  trainable=memory_trainable)
+        # 
         if activation is not None:
             self.activation(kind=activation)
         name = tf.get_variable_scope().name

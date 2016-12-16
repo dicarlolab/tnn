@@ -55,7 +55,7 @@ def alexnet(input_spatial_size=224,
                                           *args, **kwargs)
 
 
-    class Conv1(ConvRNNCell):
+    class Conv1(AlexNetCell):
         def __init__(self):
             output_size = [batch_size, input_spatial_size // 8 - 1,
                            input_spatial_size // 8 - 1, 64]
@@ -70,7 +70,7 @@ def alexnet(input_spatial_size=224,
                 self.pool(3, 2, padding='VALID')
                 return self.output, self.state
 
-    class Conv2(ConvRNNCell):
+    class Conv2(AlexNetCell):
         def __init__(self):
             output_size = [batch_size, input_spatial_size // 16 - 1,
                            input_spatial_size // 16 - 1, 192]
@@ -85,7 +85,7 @@ def alexnet(input_spatial_size=224,
                 self.pool(3, 2, padding='VALID')
                 return self.output, self.state
 
-    class Conv3(ConvRNNCell):
+    class Conv3(AlexNetCell):
         def __init__(self):
             output_size = [batch_size, input_spatial_size // 16 - 1,
                            input_spatial_size // 16 - 1, 384]
@@ -98,7 +98,7 @@ def alexnet(input_spatial_size=224,
                 self.conv(inputs, state, ksize=3, stride=1, stddev=.01, bias=0)
                 return self.output, self.state
 
-    class Conv4(ConvRNNCell):
+    class Conv4(AlexNetCell):
         def __init__(self):
             output_size = [batch_size, input_spatial_size // 16 - 1,
                            input_spatial_size // 16 - 1, 384]
@@ -111,7 +111,7 @@ def alexnet(input_spatial_size=224,
                 self.conv(inputs, state, ksize=3, stride=1, stddev=.01, bias=1)
                 return self.output, self.state
 
-    class Conv5(ConvRNNCell):
+    class Conv5(AlexNetCell):
         def __init__(self):
             output_size = [batch_size, input_spatial_size // 32,
                            input_spatial_size // 32, 256]
@@ -125,7 +125,7 @@ def alexnet(input_spatial_size=224,
                 self.pool(3, 2, padding='VALID')
                 return self.output, self.state
 
-    class FC6(ConvRNNCell):
+    class FC6(AlexNetCell):
         def __init__(self):
             output_size = [batch_size, 4096]
             state_size = [batch_size, 4096]
@@ -136,7 +136,17 @@ def alexnet(input_spatial_size=224,
                 self.fc(inputs, state, stddev=.01, bias=1)
                 return self.output, self.state
 
-    class FC7(ConvRNNCell):
+        # with tf.variable_scope('local3') as scope:
+        #     # Move everything into depth so we can perform a single matrix multiply.
+        #     reshape = tf.reshape(pool2, [FLAGS.batch_size, -1])
+        #     dim = reshape.get_shape()[1].value
+        #     weights = _variable_with_weight_decay('weights', shape=[dim, 384],
+        #                                           stddev=0.04, wd=0.004)
+        #     biases = _variable_on_cpu('biases', [384], tf.constant_initializer(0.1))
+        #     local3 = tf.nn.relu(tf.matmul(reshape, weights) + biases, name=scope.name)
+        #     _activation_summary(local3)
+
+    class FC7(AlexNetCell):
         def __init__(self):
             output_size = [batch_size, 4096]
             state_size = [batch_size, 4096]
@@ -147,7 +157,7 @@ def alexnet(input_spatial_size=224,
                 self.fc(inputs, state, stddev=.01, bias=1)
                 return self.output, self.state
 
-    class FC8(ConvRNNCell):
+    class FC8(AlexNetCell):
         def __init__(self):
             output_size = [batch_size, 1000]
             state_size = [batch_size, 1000]
