@@ -160,27 +160,4 @@ class GenFuncCell(RNNCell):
         local3 = tf.nn.relu(tf.matmul(reshape, weights) + biases)
         _activation_summary(local3)
 
-    def fc(self, inputs, state,
-           activation='relu',
-           dropout=None,
-           memory_decay=0,
-           memory_trainable=False,
-           *args, **kwargs):
-        super(ConvRNNCell, self).fc(in_layer=inputs,
-                                    out_shape=self.state_size[-1],
-                                    activation=None,
-                                    dropout=None,
-                                    *args, **kwargs)
-        self.state = self.memory(state,
-                                 memory_decay=memory_decay,
-                                 trainable=memory_trainable)
-        if activation is not None:
-            self.activation(kind=activation)
-        if dropout is not None:
-            self.activation(dropout=dropout)
-        name = tf.get_variable_scope().name
-        self.params[name]['fc']['activation'] = activation
-        self.params[name]['fc']['dropout'] = dropout
-        self.params[name]['fc']['memory_decay'] = memory_decay
-        self.params[name]['fc']['memory_trainable'] = memory_trainable
-        return self.output
+    
