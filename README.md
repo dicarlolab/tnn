@@ -1,35 +1,67 @@
 # UniCycle Architecture Builder
-Basic overview:
+Universal Neural Interpretation and Cyclicity Engine (UNICYCLE)
+
+The way this works is the following:
 
 Step 1
 =======
  High-level description of the system is fed in via a JSON object-bearing
- file that is passed in as a command line argument when the script is executed
+ file that is passed in as a command line argument when the script is run.
+ Here we get the raw metadata from the JSON file and store it in a list of 
+ dictionaries, along with all the information about the node
 
 Step 2
 =======
- A Network-X model of the system is composed from the JSON file, containing
- all the necessary metadata and progress/bypass/feedback connector information
+ No we create an Network-X graph G for planning purposes. Store the nickname 
+ only as the pointer to the node to be instantiated, and then use this 
+ nickname to look up relevant node's metadata in the node dictionary list we 
+ acquired in step one.
 
 Step 3
 =======
- The NODES of the Network-X model are converted into appropriate General
- Functional Cells, and their internal metadata is used to populate the
- functional space inside of each of the cells
+ Using the Network-X graph G we will find the longest simple path from start 
+ to finish. For now we will use the notation 
+    max(nx.all_simple_paths(G,start,end), key=len)
+ Returns a list of node names (a path).
 
 Step 4
 =======
- The EDGES of the Network-X model (progress/bypass/feedback) are converted to
- progress/bypass/feedback connections in the TF graph. This is done by adding
- pointers/references from every TF object to every other object that it
- receives inputs from, from both the previous and the current time steps. 
-
- Proper sizes for the input/state/output sizes of all the TF Cells are
- calculated and accounted for.
+ Using the Network-X graph G and the newly acquired longest path from step 3 
+ we create a parallel graph H and copy the main "spine" into it. Then, iterate 
+ through the "spine" nodes and look up their connections in graph G.
 
 Step 5
 =======
- Proper RNN unrolling of nodes within 1 time step is performed. This is almost
+ For each node on the "spine", if the incoming link is from an ancestor then 
+ we add it as-is. If, however, the incoming link is not from an ancestor (i.e. 
+ incoming from the future), add the link to the node with a ~ attribute in the
+ metadata of the node. This is done to let the system know down the line that 
+ the past state needs to be accessed. 
+ 
+Step 6
+=======
+ Once all the connections are made, we start the size calculation. This 
+ involves the Harbor of every one of the nodes (here the actual Tensors will 
+ be scaled or added or concatenated and the resulting Tensor will be used as 
+ input to the functional "conveyor belt"). While the Harbor is the place where 
+ the actual resizing happens, we also have the Harbor-Master policy. This 
+ policy can be specified in the node metadata in the JSON, or if it isn't 
+ specified it can be inferred from the default settings (default subject to 
+ modification too). 
+
+ For every NODE:
+ - Collect all non-feedback inputs, find their sizes, push list of sizes along 
+ with Harbor-Master policy into general Harbor-Master utility function to find 
+ ultimate size. 
+ - Create a reference dictionary for node metadata that has incoming inputs as 
+ keys and scaling values as values. 
+ - Calculate all final sizes for all nodes, use for feedback up and down the 
+ line.
+
+
+Step 7
+=======
+ Perform proper RNN unrolling of nodes within 1 time step. This is almost
  cheating, as the RNN is essentially unrolled through a single time step but
  memoized states it's parent and predecessor Cells are queried and accounted
  for, creating the illusion of a true RNN unroll. In reality, DAG forward 
