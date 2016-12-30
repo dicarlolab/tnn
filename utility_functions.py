@@ -18,8 +18,8 @@ def create_kwargs_conv(fn, input_size, name):
                                 initializer=tf.random_uniform_initializer(0,1)
                                  )
     out_dict['filter']=filter_tensor
-    out_dict['strides']=fn['stride']
-    out_dict['padding']=fn['padding']
+    out_dict['strides']=[1,fn['stride'],fn['stride'],1]
+    out_dict['padding']=fn['padding'].upper()
     out_dict['name']=str(name) if isinstance(name, basestring) \
                                else 'conv_%s'%(str(randint(1,1000)))
 
@@ -32,9 +32,9 @@ def create_kwargs_maxpool(fn, input_size, name):
     assert 'type' in fn, 'Type of function not in function!'
     assert fn['type']=='maxpool', 'Type has to be MAXPOOL, but is %s'%(fn['type'])
     
-    out_dict['ksize']=fn['k_size']
-    out_dict['strides']=fn['stride']
-    out_dict['padding']=fn['padding']
+    out_dict['ksize']=[1,fn['k_size'],fn['k_size'],1]
+    out_dict['strides']=[1,fn['stride'],fn['stride'],1]
+    out_dict['padding']=fn['padding'].upper()
     out_dict['name']=str(name) if isinstance(name, basestring) \
                                else 'maxpool_%s'%(str(randint(1,1000)))
     return out_dict, calc_size_after(input_size,fn)
@@ -108,12 +108,12 @@ def reshape_size_to(incoming_sizes,current_policy):
 
 def calc_size_after(input_size,function_):
     if function_['type']=='conv':
-        if function_['padding']=='valid':
+        if function_['padding']=='same':
             out_height = int(ceil(float(input_size[1]) \
                                   / float(function_['stride'])))
             out_width  = int(ceil(float(input_size[2]) \
                                   / float(function_['stride'])))
-        elif function_['padding']=='same':
+        elif function_['padding']=='valid':
             out_height = int(ceil(float(input_size[1] \
                                         -function_['filter_size'][0]+1) \
                                   / float(function_['stride'])))

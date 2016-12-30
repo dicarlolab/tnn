@@ -58,6 +58,11 @@ class Harbor(object):
                 # Not sure if tf.image.resize_images is trainable...
                 pool = tf.image.resize_images(input_, self.desired_size[1:3])
 
+            print '>> Harbor of %s - resizing %s, want %s and got %s'%\
+                                            (self.name,
+                                             incoming_input,
+                                             self.desired_size,
+                                             pool.get_shape().as_list())
             # Now append to a list of all the inputs
             big_input_list.append(pool)
 
@@ -68,6 +73,9 @@ class Harbor(object):
         elif self.combination_type=='sum':
             out = tf.add_n(big_input_list,name=self.name+'_harbor_sum')
         
+        print '>> Harbor of %s - out size %s'%(self.name,
+                                               out.get_shape().as_list())
+
         # Finally, return the resulting Tensor
         return out
 

@@ -450,7 +450,7 @@ with tf.Graph().as_default():
             # Assemble the correct inputs:
             # Inputs are {'nickname':Tensor}
             # First the forward inputs:
-            inputs={i:repo[i].output for i in incoming_inputs_forward}
+            inputs={i:repo[i].state for i in incoming_inputs_forward}
             # Then the backwards inputs:
             for i in incoming_inputs_feedback:
                 inputs[i]=repo[i].state_old
@@ -466,4 +466,4 @@ with tf.Graph().as_default():
             #      ######          ######          ######      
 
         # Training goes here
-        
+

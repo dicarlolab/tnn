@@ -9,6 +9,16 @@ import tensorflow as tf
 from tensorflow.python.ops.rnn_cell import RNNCell
 from harbor import Harbor, Harbor_Dummy
 
+verbose=True
+
+def dbgr(_string='', leave_line_open=0, newline=True):
+    if leave_line_open:
+        if verbose: print(_string),
+    else:
+        if verbose: 
+            if newline:
+                print(_string,'\n')
+            else: print(_string)
 
 
 class GenFuncCell(RNNCell):
@@ -104,6 +114,8 @@ class GenFuncCell(RNNCell):
     def __call__(self, input_): 
         # Input is a dict {'nickname':Tensor}
         prev=self.harbor(input_)
+        dbgr('>> GenFuncCell of node %s - post-Harbor size %s'%(self._scope,
+                                                prev.get_shape().as_list()) )
 
         # Each before-the-memory function, when run, will update the prev 
         # value and pass that to the next function
@@ -117,9 +129,16 @@ class GenFuncCell(RNNCell):
             # the current function, and collect the output
             prev=cur_f(prev,**cur_f_args)
 
+        dbgr('>> GenFuncCell of node %s - post-state-func size %s'%(self._scope,
+                                                prev.get_shape().as_list()) )
+        dbgr('>> GenFuncCell of node %s - pre-memory state size %s'%(self._scope,
+                                           self.state.get_shape().as_list()) )
         # Now, we update the memory!
         self.state_old=self.state
         self.state=self.memory(in_layer=prev, **self._memory_kwargs)
+
+        dbgr('>> GenFuncCell of node %s - post-memory state size %s'%(self._scope,
+                                            self.state.get_shape().as_list()) )
 
         # Each after-the-memory function, when run, will update the 
         # self.output value and pass that to the next function
@@ -133,6 +152,9 @@ class GenFuncCell(RNNCell):
             # the current function, and collect the output
             self.output=cur_f(self.output,**cur_f_args)
 
+        dbgr('>> GenFuncCell of node %s - post-out-func size %s'%(self._scope,
+                                            self.output.get_shape().as_list()) )
+
         return self.output, self.state
 
 
@@ -142,12 +164,11 @@ class GenFuncCell(RNNCell):
         # loop the INPUT in, along with a scaled STATE. 
         # Return the resultant addition of scaled STATE and INPUT/OUTPUT
         if in_layer is None: in_layer = self.output
-        name = tf.get_variable_scope().name
         initializer = tf.constant_initializer(value=memory_decay)
         mem = tf.get_variable(initializer=initializer,
                               shape=1,
                               trainable=trainable,
-                              name='decay_param_%s'%(name))
+                              name='decay_param_%s'%(self._scope))
         decay_factor = tf.sigmoid(mem)
         self.output = tf.mul(self.state, decay_factor) + in_layer
         return self.output

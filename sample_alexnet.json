@@ -13,7 +13,7 @@
                      "filter_size":[11,11],
                      "num_filters":48,
                      "stride":4,
-                     "padding":"valid"
+                     "padding":"same"
                    },
                    { "type":"relu"
                    },
@@ -35,7 +35,7 @@
                      "filter_size":[5,5],
                      "num_filters":128,
                      "stride":1,
-                     "padding":"valid"
+                     "padding":"same"
                    },
                    { "type":"relu"
                    },
@@ -57,7 +57,7 @@
                      "filter_size":[3,3],
                      "num_filters":192,
                      "stride":1,
-                     "padding":"valid"
+                     "padding":"same"
                    },
                    { "type":"relu"
                    }
@@ -69,7 +69,7 @@
                      "filter_size":[3,3],
                      "num_filters":192,
                      "stride":1,
-                     "padding":"valid"
+                     "padding":"same"
                    },
                    { "type":"relu"
                    }
@@ -81,7 +81,7 @@
                      "filter_size":[3,3],
                      "num_filters":128,
                      "stride":1,
-                     "padding":"valid"
+                     "padding":"same"
                    },
                    { "type":"relu"
                    },
