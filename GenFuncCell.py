@@ -7,17 +7,13 @@ from __future__ import absolute_import, division, print_function
 import tensorflow as tf
 
 from tensorflow.python.ops.rnn_cell import RNNCell
-from tfutils.model import ConvNet
+from harbor import Harbor, Harbor_Dummy
 
 
 
 class GenFuncCell(RNNCell):
-    function_lookup={'conv':tf.nn.conv2d,
-                     'maxpool':tf.nn.max_pool,
-                     'relu':tf.nn.relu,
-                     'norm':tf.nn.local_response_normalization}
-
     def __init__(self, 
+                 harbor,
                  state_fs, 
                  out_fs, 
                  state_fs_kwargs,
@@ -27,9 +23,16 @@ class GenFuncCell(RNNCell):
                  state_size=None, 
                  seed=None, 
                  scope=None):
+        function_lookup={'conv':tf.nn.conv2d,
+                         'maxpool':tf.nn.max_pool,
+                         'relu':tf.nn.relu,
+                         'norm':tf.nn.local_response_normalization,
+                         'fc':self.fc}
         """
         Input explanation:
 
+        - harbor:
+            The Harbor for this Node, the inputs are received here
         - state_fs:
             A list of functions to be called in order before memory update
         - out_fs:
@@ -74,30 +77,33 @@ class GenFuncCell(RNNCell):
         #=======
         self._memory_kwargs=memory_kwargs
         #=======
-        self.scope = type(self).__name__ if scope is None else scope
-        self.output_size = output_size if isinstance(output_size,type([])) \
+        self._scope = type(self).__name__ if scope is None else scope
+        self._output_size = output_size if isinstance(output_size,type([])) \
                                         else output_size.as_list()
-        self.state_size = state_size if isinstance(state_size,type([])) \
+        self._state_size = state_size if isinstance(state_size,type([])) \
                                       else state_size.as_list()
 
         # The zero_state functions are inherited from the RNNCell
-        self.state = self.zero_state(FLAGS.batch_size, dtype=tf.float32)
-        self.state_old = self.zero_state(FLAGS.batch_size, dtype=tf.float32)
+        self.state = tf.zeros(self._state_size)
+        self.state_old = tf.zeros(self._state_size)
 
-    @property
-    def state_size(self):
-        return self.state_size
+        self.harbor=harbor
 
-    @property
-    def output_size(self):
-        return self.output_size
+    # @property
+    # def state_size(self):
+    #     return self.state_size
 
-    @property
-    def scope(self):
-        return self.scope
+    # @property
+    # def output_size(self):
+    #     return self.output_size
 
-    def __call__(self, input_):
-        prev=input_
+    # @property
+    # def scope(self):
+    #     return self._scope
+
+    def __call__(self, input_): 
+        # Input is a dict {'nickname':Tensor}
+        prev=self.harbor(input_)
 
         # Each before-the-memory function, when run, will update the prev 
         # value and pass that to the next function
@@ -148,16 +154,17 @@ class GenFuncCell(RNNCell):
 
     def fc(input_, output_size):
         # Move everything into depth so we can perform a single matrix multiply.
+        batch_size=input_.get_shape()[0].value
         name = tf.get_variable_scope().name
-        reshape = tf.reshape(input_, [FLAGS.batch_size, -1])
+        reshape = tf.reshape(input_, [batch_size, -1])
         dim = reshape.get_shape()[1].value
-        weights = tf.get_variable('weights_%s'%(scope), 
-                            shape=[dim, output_size], 
-                            initializer=tf.random_normal_initializer(0.5, 0.1))
+        weights = tf.get_variable('weights_%s'%(self._scope), 
+                        shape=[dim, output_size], 
+                        initializer=tf.random_normal_initializer(0.5, 0.1))
         biases = _variable_on_cpu('biases_%s'%(scope), 
                                   [output_size], 
                                   tf.constant_initializer(0.1))
-        local3 = tf.nn.relu(tf.matmul(reshape, weights) + biases)
-        _activation_summary(local3)
+        mulss = tf.nn.relu(tf.matmul(reshape, weights) + biases)
+        return mulss
 
     

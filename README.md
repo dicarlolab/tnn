@@ -21,24 +21,23 @@ Step 3
 =======
  Using the Network-X graph G we will find the longest simple path from start 
  to finish. For now we will use the notation 
-    max(nx.all_simple_paths(G,start,end), key=len)
- Returns a list of node names (a path).
+    list(nx.bfs_edges(G,first))
+ Returns a list of edges.
 
 Step 4
 =======
- Using the Network-X graph G and the newly acquired longest path from step 3 
- we create a parallel graph H and copy the main "spine" into it. Then, iterate 
+ Using the Network-X graph G we create a parallel graph H and copy the main "spine" into it. 
+    [(fr,to) for (fr,to) in G.edges() if not any([to in i for i in nx.all_simple_paths(G,first,fr)])]
+ Then, iterate 
  through the "spine" nodes and look up their connections in graph G.
 
-Step 5
-=======
  For each node on the "spine", if the incoming link is from an ancestor then 
  we add it as-is. If, however, the incoming link is not from an ancestor (i.e. 
  incoming from the future), add the link to the node with a ~ attribute in the
  metadata of the node. This is done to let the system know down the line that 
  the past state needs to be accessed. 
  
-Step 6
+Step 5
 =======
  Once all the connections are made, we start the size calculation. This 
  involves the Harbor of every one of the nodes (here the actual Tensors will 
@@ -58,6 +57,9 @@ Step 6
  - Calculate all final sizes for all nodes, use for feedback up and down the 
  line.
 
+Step 6
+=======
+ Tensor creation.
 
 Step 7
 =======

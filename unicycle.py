@@ -18,28 +18,28 @@ Step 2
  nickname to look up relevant node's metadata in the node dictionary list we 
  acquired in step one.
 
-Step 3
+ Step 3
 =======
  Using the Network-X graph G we will find the longest simple path from start 
  to finish. For now we will use the notation 
-    max(nx.all_simple_paths(G,start,end), key=len)
- Returns a list of node names (a path).
+    list(nx.bfs_edges(G,first))
+ Returns a list of edges.
 
 Step 4
 =======
- Using the Network-X graph G and the newly acquired longest path from step 3 
- we create a parallel graph H and copy the main "spine" into it. Then, iterate 
- through the "spine" nodes and look up their connections in graph G.
+ Using the Network-X graph G we create a parallel graph H and copy the main 
+ forward links into it. 
+    [(fr,to) for (fr,to) in G.edges()
+        if not any([to in i for i in nx.all_simple_paths(G,first,fr)])]
+ Then, iterate through the nodes in H and look up the connections in graph G.
 
-Step 5
-=======
  For each node on the "spine", if the incoming link is from an ancestor then 
  we add it as-is. If, however, the incoming link is not from an ancestor (i.e. 
  incoming from the future), add the link to the node with a ~ attribute in the
  metadata of the node. This is done to let the system know down the line that 
  the past state needs to be accessed. 
  
-Step 6
+Step 5
 =======
  Once all the connections are made, we start the size calculation. This 
  involves the Harbor of every one of the nodes (here the actual Tensors will 
@@ -59,6 +59,9 @@ Step 6
  - Calculate all final sizes for all nodes, use for feedback up and down the 
  line.
 
+Step 6
+=======
+ Tensor creation.
 
 Step 7
 =======
@@ -73,25 +76,26 @@ Let's kick ass
 
 
 
-            #                      STEP 0                           $$$$$$\  
-            #             INITIALIZATION AND SETUP                 $$$ __$$\ 
-            #      ######          ######          ######          $$$$\ $$ |
-            #       ####################################           $$\$$\$$ |
-            #      ######          ######          ######          $$ \$$$$ |
-            #                                                      $$ |\$$$ |
-            #    Prepare the environment and import all the        \$$$$$$  /
-            #     necessary supplementary libraries and/or          \______/ 
-            #       classes from other files and repos.                   
+            #                      STEP 0                   
+            #      ######          ######          ######   
+            #       ####################################    
+            #      ######          ######          ######   
+      
+
+
 # Import all the future support libs
 from __future__ import absolute_import, division
 
 verbose=True
 
-def dbgr(_string='', leave_line_open=0):
+def dbgr(_string='', leave_line_open=0, newline=True):
     if leave_line_open:
         if verbose: print _string,
     else:
-        if verbose: print _string
+        if verbose: 
+            if newline:
+                print _string,'\n'
+            else: print _string
 
 print(r"""
         Welcome to
@@ -110,7 +114,6 @@ $$ |  $$ |$$ |\$$$ |  $$ |  $$ |  $$\    $$ |    $$ |  $$\ $$ |      $$ |
 """)
 
 dbgr('Verbose Mode is ON')
-dbgr()
 
 dbgr('Starting Basic Library Import...', 1)
 
@@ -128,23 +131,26 @@ from random import randint
 
 # Import Network-X and JSON support libraries
 import networkx as nx
+import matplotlib.pyplot as plt
 import json
 
+# Import Unicycle-specific things
+from unicycle_settings import *
+import utility_functions
+from harbor import Harbor, Harbor_Dummy
+from GenFuncCell import GenFuncCell
+
 dbgr('done!')
-dbgr()
 
 
 
-            #                      STEP 1                              $$\   
-            #               JSON IMPORT AND PARSE                    $$$$ |  
-            #      ######          ######          ######            \_$$ |  
-            #       ####################################               $$ |  
-            #      ######          ######          ######              $$ |  
-            #                                                          $$ |  
-            #   High-level description of the system is fed in       $$$$$$\ 
-            #    via a JSON object-bearing file that is passed       \______|
-            #    in as a command line argument when the script 
-            #                     is executed
+            #                      STEP 1                      
+            #      ######          ######          ######      
+            #       ####################################       
+            #      ######          ######          ######      
+
+
+
 dbgr('======\nSTEP 1\n JSON Import and Parse\n======================')
 if len(sys.argv)<2:
     # raise Exception('You need to specify the name of JSON settings file!')
@@ -165,20 +171,19 @@ with open('./'+json_file_name) as data_file:
     json_data = json.load(data_file)
 
 dbgr('done!')
-dbgr()
 
 dbgr('Checking the integrity of the JSON file...')
 
 assert 'nodes' in json_data, "NODES field not in JSON file!"
 assert len(json_data['nodes'])>0, "No NODES in the JSON file!"
-assert 'forward' in json_data, "FORWARD link field not in JSON file!"
-if len(json_data['forward'])==0: print 'Warning: FORWARD links empty!'
-assert 'backward' in json_data, "BACKWARD link field not in JSON file!"
-if len(json_data['backward'])==0: print 'Warning: BACKWARD links empty!'
+assert 'links' in json_data, "LINKS link field not in JSON file!"
+if len(json_data['links'])==0: print 'Warning: LINKS empty!'
+# assert 'backward' in json_data, "BACKWARD link field not in JSON file!"
+# if len(json_data['backward'])==0: print 'Warning: BACKWARD links empty!'
 
 nodes=json_data['nodes']
-forward=json_data['forward']
-backward=json_data['backward']
+links=json_data['links']
+# backward=json_data['backward']
 
 first=str(nodes[0]['nickname'])
 final=str(nodes[-1]['nickname'])
@@ -188,227 +193,279 @@ assert not any( [all([f['type']=='relu' for f in n['functions']]) \
             for n in nodes]), 'ReLu cannot appear by itself in a Cell!'
 
 dbgr('done!')
-dbgr()
 
 
-            #                      STEP 2                           $$$$$$\  
-            #                KWARGS PREPARATION                    $$  __$$\ 
-            #      ######          ######          ######          \__/  $$ |
-            #       ####################################            $$$$$$  |
-            #      ######          ######          ######          $$  ____/ 
-            #                                                      $$ |      
-            #     We are going to first iterate through all        $$$$$$$$\ 
-            #  the nodes we extracted from the JSON file and       \________|
-            #   apply a series of additional steps to generate
-            #   TF-function-ready kwarg dictionaries with all the
-            #                 correct arguments          
-dbgr('======\nSTEP 2\n Keyword Argument Prep\n======================')
 
-# Create repository of all the nodes, addressed by name
-repo={}
-for node in nodes:
-    name=node['nickname']
-    assert name not in repo, 'Naming conflict! Name %s already exists'%(name)
-    # The dictionary contains a list of two items:
-    #   0. The final kwargs dictionary for that node
-    #   1. The incoming Cells and their sizes
-    #   2. The scaling factor necessary for every one of the inputs
-    repo[name]=[{},[],[]]
+            #                      STEP 2                     
+            #      ######          ######          ######      
+            #       ####################################       
+            #      ######          ######          ######      
 
-def createKwargsConv(fn, name):
-    # This function takes the abstract JSON representation and prepares the
-    # correct function-ready kwarg collection
-    out_dict={}
-    assert 'type' in fn, 'Type of function not in function!'
-    assert fn['type']=='conv', 'Type has to be CONV, but is %s'%(fn['type'])
-    filter_tensor=tf.get_variable('filter_tensor',
-                                  fn['filter_size']\
-                                    +[properlyScaled(repo[fn[name]][1])]\
-                                    +[fn['num_filters']],
-                                initializer=tf.random_uniform_initializer(0,1)
-                                 )
-    out_dict['filter']=filter_tensor
-    out_dict['strides']=fn['stride']
-    out_dict['padding']=fn['padding']
-    out_dict['name']=str(name) if isinstance(name, basestring) \
-                               else 'conv_%s'%(str(randint(1,1000)))
 
-    return out_dict
 
-def properlyScaled(list_of_incoming_tuples):
-    # Do some magic and figure out the biggest input size, create internal
-    # structure to reshape all the input to that size and concatenate in
-    # terms of channels
-    max_size_so_far=0
-    for incoming_tuple in list_of_incoming_tuples:
-        node_size=incoming_tuple[1][0]
-        if node_size>max_size_so_far:
-            max_size_so_far=node_size
-    for incoming_tuple in list_of_incoming_tuples:
-        scaling_factor=max_size_so_far//incoming_tuple[1][0]
-        # Not sure how to do this yet, sketchy:
-        resized = tf.image.resize_images(input_tensor, [new_height, new_width])
-        repo[incoming_tuple[0]][2].append(resized)
+dbgr('======\nSTEP 2\n Network-X Raw Build\n======================')
 
-def createKwargsMaxpool(fn, name):
-    # This function takes the abstract JSON representation and prepares the
-    # correct function-ready kwarg collection
-    out_dict={}
-    assert 'type' in fn, 'Type of function not in function!'
-    assert fn['type']=='maxpool', 'Type has to be MAXPOOL, but is %s'%(fn['type'])
-    
-    out_dict['ksize']=fn['k_size']
-    out_dict['strides']=fn['stride']
-    out_dict['padding']=fn['padding']
-    out_dict['name']=str(name) if isinstance(name, basestring) \
-                               else 'maxpool_%s'%(str(randint(1,1000)))
-    return out_dict
 
-def createKwargsRelu(fn, name):
-    # This function takes the abstract JSON representation and prepares the
-    # correct function-ready kwarg collection
-    out_dict={}
-    assert 'type' in fn, 'Type of function not in function!'
-    assert fn['type']=='relu', 'Type has to be RELU, but is %s'%(fn['type'])
+# Convert list of link dictionaries to list of link tuples to be fed into 
+# Network-X
+links_tuples=[(str(i['from']),str(i['to'])) for i in links]
 
-    out_dict['name']=str(name) if isinstance(name, basestring) \
-                               else 'relu_%s'%(str(randint(1,1000)))
-    return out_dict
+dbgr('Building Network-X Raw DiGraph...')
+# We create a Network-X DiGraph G and populate it using the links.
+G=nx.DiGraph()
+G.add_edges_from(links_tuples)
+# G.add_edge('fc_8','conv_3')
 
-def createKwargsNorm(fn, name):
-    # This function takes the abstract JSON representation and prepares the
-    # correct function-ready kwarg collection
-    out_dict={}
-    assert 'type' in fn, 'Type of function not in function!'
-    assert fn['type']=='norm', 'Type has to be NORM, but is %s'%(fn['type'])
-    
-    out_dict['depth_radius']=fn['depth_radius']
-    out_dict['bias']=fn['bias']
-    out_dict['alpha']=fn['alpha']
-    out_dict['name']=str(name) if isinstance(name, basestring) \
-                               else 'norm_%s'%(str(randint(1,1000)))
-    return out_dict
+dbgr('Network-X Raw Graph created! Nodes: ',newline=False)
+dbgr('    '+'\n    '.join(sorted(G.nodes())))
 
-# dbgr('Creating a Network-X Graph...',1)
-# # Create Graph
-# NXG = nx.DiGraph()
-# dbgr('done!')
+# Draw the Graph
+# dbgr('Drawing graph')
+# pos=nx.circular_layout(G)
+# labels={str(i):str(i).upper() for i in G.nodes()}
+# nx.draw(G,pos)
+# nx.draw_networkx_labels(G,pos,labels)
+# dbgr('Close the Matlab preview window to continue')
+# plt.show()
 # dbgr()
 
 
-# nlayers = len(nodes)
-# NXG.add_node("image_input_1", cell=None, name='input')
-# names = []
-# for node, layer in enumerate(layers):
-#     node = str(node + 1)
-#     cell = layer()  # initialize cell
-#     NXG.add_node(node, cell=cell, name=cell.scope)
-#     NXG.add_edge(str(int(node)-1), node)
-
-# #  adjacent layers
-# # NXG.add_edges_from([(names[i], names[j]) for i,j in bypasses])  # add bypass connections
-# NXG.add_edges_from([(str(i), str(j)) for i,j in bypasses])
-# # print(NXG.nodes())
-
-# # check that bypasses don't add extraneous nodes
-# if len(NXG) != nlayers + 1:
-#     import pdb; pdb.set_trace()
-#     raise ValueError('bypasses list created extraneous nodes')
-
-# dbgr('Network-X Model Functionality Temporarily Disabled')
-
-dbgr()
-
                                                                             
-            #                      STEP 3                           $$$$$$\  
-            #             GENFUNCCELL INSTANTIATION                $$ ___$$\ 
-            #      ######          ######          ######          \_/   $$ |
-            #       ####################################             $$$$$ / 
-            #      ######          ######          ######            \___$$\ 
-            #                                                      $$\   $$ |
-            #   The NODES of the Network-X model are converted     \$$$$$$  |
-            #   into appropriate General Functional Cells, and      \______/ 
-            #  their internal metadata is used to populate the              
-            #    functional space inside of each of the cells
-dbgr('======\nSTEP 3\n GenFuncCell Instantiation\n==========================')
-
-
-# For every node in the JSON description, create an instance of GenFuncCell
-# and populate it with the proper functions, as necessary.
-
-tf_cells={}
-
-for node in nodes:
-    # For every node we first collect the function information
-    node_type=str(node['type'])
-    node_functions=node['functions']
-    to_be_passed_in_state=[]
-    to_be_passed_in_state_kwargs=[]
-    for f in node_functions:
-        f_type=f['type']
-        to_be_passed_in_state.append(f_type)
-        temp_kwarg={}
-        if f_type=='conv':
-            temp_kwarg=createKwargsConv(f, node['nickname'])
-        elif f_type=='maxpool':
-            temp_kwarg=createKwargsMaxpool(f, node['nickname'])
-        elif f_type=='relu':
-            temp_kwarg=createKwargsRelu(f, node['nickname'])
-        elif f_type=='norm':
-            temp_kwarg=createKwargsNorm(f, node['nickname'])
-        to_be_passed_in_state_kwargs.append(temp_kwarg)
-
-    tf_cells[node['nickname']]=GenFuncCell(to_be_passed_in_state,
-                                           [],
-                                           to_be_passed_in_state_kwargs,
-                                           {},
-                                           {},
-                                           scope=node['nickname'])
-
-dbgr()
-
-            #                      STEP 4                          $$\   $$\ 
-            #             PROGRESS/BYPASS/FEEDBACK                 $$ |  $$ |
-            #      ######          ######          ######          $$ |  $$ |
-            #       ####################################           $$$$$$$$ |
-            #      ######          ######          ######          \_____$$ |
-            #                                                            $$ |
-            #         The EDGES of the Network-X model                   $$ |
-            #    (progress/bypass/feedback) are converted to             \__|
-            #      progress/bypass/feedback connections in                  
-            #       the TF graph. This is done by adding                    
-            #    pointers/references from every TF object to                
-            #    every other object that it receives inputs                 
-            #   from, from both the previous and the current                
-            #                   time steps.                                 
-            #                                                               
-            #   Proper sizes for the input/state/output sizes               
-            #      of all the TF Cells are calculated and                   
-            #                  accounted for.                               
-dbgr('======\nSTEP 4\n Progress/Bypass/Feedback\n=========================')
-
-
-for link in forward:
-    repo[link['to']][1].append(link['from'])
+            #                      STEP 3                    
+            #      ######          ######          ######      
+            #       ####################################       
+            #      ######          ######          ######      
 
 
 
-dbgr()
+dbgr('======\nSTEP 3\n BFS Dependency Parse\n====================')
 
-            #                      STEP 5                          $$$$$$$\  
-            #               CUSTOM RNN UNROLLING                   $$  ____| 
-            #      ######          ######          ######          $$ |      
-            #       ####################################           $$$$$$$\  
-            #      ######          ######          ######          \_____$$\ 
-            #                                                      $$\   $$ |
-            #    Proper RNN unrolling of nodes within 1 time       \$$$$$$  |
-            #    step is performed. This is almost cheating,        \______/ 
-            #     as the RNN is essentially unrolled through                
-            #    a single time step but memoized states it's                
-            #     parent and predecessor Cells are queried                  
-            #   and accounted for, creating the illusion of a               
-            #     true RNN unroll. In reality, DAG forward                  
-            #             structure is preserved                            
-dbgr('======\nSTEP 5\n Custom RNN Unrolling\n=====================')
-dbgr('Derp Derp Derp')
-dbgr()
+# Find the longest simple path through the Graph, and save it as "spine"
+dbgr('Finding all the forward dependeny links in the Graph using BFS...',1)
+# spine=max([i for i in nx.all_simple_paths(G,first,final)], key=len)
+forward_bfs=list(nx.bfs_edges(G,first))
+dbgr('done!')
+dbgr('Links: ',newline=False)
+dbgr('    '+'\n    '.join([str(i) for i in forward_bfs]))
+
+
+
+            #                      STEP 4                  
+            #      ######          ######          ######      
+            #       ####################################       
+            #      ######          ######          ######  
+
+
+
+dbgr('======\nSTEP 4\n Clone Forward-Only Graph Creation\n==================')
+
+dbgr('Finding all non-ancestral dependeny links in the Graph...',1)
+# Let's find auxillary edges that are not in bfs traverse
+# Gotta love string comprehensions :)
+# Add only those edges that lead forward (the target is not an ancestor)
+forward=[(fr,to) for (fr,to) in G.edges() \
+            if not any([to in i for i in nx.all_simple_paths(G,first,fr)])]
+dbgr('done!')
+dbgr('Links: ',newline=False)
+dbgr('    '+'\n    '.join([str(i) for i in forward]))
+
+# Let's create a forward-only copy of G --> H
+H=nx.DiGraph(forward)
+dbgr('Nodes of forward-only Graph: ',newline=False)
+dbgr('    '+'\n    '.join(sorted(H.nodes())))
+
+
+
+            #                      STEP 5
+            #      ######          ######          ######      
+            #       ####################################       
+            #      ######          ######          ######     
+
+
+
+dbgr('======\nSTEP 5\n Input Size Calculation\n=====================')
+
+# Helper function to help with fetching node data from the big dump
+def fetch_node(nickname, node_storage=nodes):
+    # Get the dictionary of info for a particular node by nickname
+    matching=[i for i in node_storage if i['nickname']==nickname]
+    if len(matching)==0: return None
+    if len(matching)>1:
+        raise Exception('More than 1 node named "%s"'%(nickname))
+    return matching[0]
+
+dbgr('Starting the node traversal for size calculation. If this step hangs \
+check the node_out_size validation loop in <Step 5>.')
+
+# This is a hash table that looks at whether a particular node has been
+# traversed or not (if it's size has been calculated)
+node_out_size={i:None for i in H.nodes()}
+node_state_size={i:None for i in H.nodes()}
+node_harbors={first:Harbor_Dummy()}
+
+dbgr('Calculating Input size...',1)
+# We assume that input image size has been specified
+input_node=fetch_node(first)
+if 'batch_size' in input_node: BATCH_SIZE=input_node['batch_size']
+assert 'functions' in input_node, 'Input node has no functions!'
+assert 'output_size' in input_node['functions'][0], 'No input size specified!'
+# [batch, height, width, channels], batch is usually set to None
+node_out_size[first]=[BATCH_SIZE]+input_node['functions'][0]['output_size']
+node_state_size[first]=node_out_size[first][:]
+dbgr('done!')
+
+# Create a list to store the correct initialization order for the nodes:
+node_touch=[first]
+
+print 'Starting Node Sizes:'
+for i in sorted(node_out_size):
+    print '   ',i.ljust(max([len(j) for j in sorted(node_out_size)])),\
+          ':',node_out_size[i]
+print
+
+# Now let's write a loop that check the dependencies of nodes to make sure
+# everything preceding a node has been calculated:
+while not all(node_out_size.values()):
+    for node in node_out_size:
+        if node_out_size[node]:
+            # Current node has been calculated already, skip!
+            continue
+        else:
+            if all([node_out_size[i] for i in H.predecessors(node)]):
+                dbgr('Counting up the sizes for node %s'%(node),
+                     newline=False)
+                # All the predecessors have been traversed, we can now proceed
+                # First, gather all the necessary info about the current node:
+                current_info=fetch_node(node)
+
+                # Then, gather the sizes of all incoming nodes into a dict:
+                # {'nickname':(size,past_1_present_0)}
+                incoming_sizes={}
+                for pred in G.predecessors(node):
+                    if pred in H.predecessors(node):
+                        # If the predecessor is in H then it's forward only
+                        incoming_sizes[pred]=(node_out_size[pred],0)
+                    else:
+                        # If it's not in H, then it's a past feedback link
+                        incoming_sizes[pred]=(node_out_size[pred],1)
+
+                # Now get information from JSON about HarborMaster policy:
+                current_policy=HARBOR_MASTER_DEFAULT if 'policy' \
+                            not in current_info else current_info['policy']
+
+                # Find the desired input size after Harbor processing
+                desired_size=utility_functions.reshape_size_to(incoming_sizes,
+                                                               current_policy)
+
+                # Create a Harbor instance
+                node_harbors[node]=Harbor(desired_size,
+                                      policy=current_policy,
+                                      node_name=node)
+
+                # Find the size of the state:
+                current_state_size=utility_functions.chain_size_crunch(\
+                                       desired_size,current_info['functions'])
+                print desired_size,current_state_size
+
+                # Find the size of the output:
+                current_out_size=current_state_size[:]
+
+                # Update node_out_size and node_state_size
+                node_out_size[node]=current_out_size[:]
+                node_state_size[node]=current_state_size[:]
+
+                # Add the current node to the node_touch list for further TF
+                # Tensor creation order
+                node_touch.append(node)
+
+                # break the for loop after modifying the node_out_size dict
+                break
+            else:
+                # There are other nodes that need to be calculated, skip
+                continue
+
+dbgr('\nAll sizes calculated!')
+
+
+
+            #                      STEP 6
+            #      ######          ######          ######      
+            #       ####################################       
+            #      ######          ######          ######      
+
+dbgr('======\nSTEP 6\n TF Node Creation\n========================')
+
+
+with tf.Graph().as_default():
+    # with tf.Graph().device(device_for_node):    
+    sess = tf.Session()
+    with sess.as_default():
+
+        # Initialize the first TF Placeholder to be pushed through the Graph
+        first_cell=GenFuncCell(harbor=node_harbors[first],
+                               state_fs=[], 
+                               out_fs=[], 
+                               state_fs_kwargs=[],
+                               out_fs_kwargs=[],
+                               memory_kwargs={},
+                               output_size=node_out_size[first], 
+                               state_size=node_state_size[first], 
+                               scope=first)
+
+        # Repository of all the Tensor outputs for each Node in the TF Graph
+        repo={ first:first_cell }
+
+        # Now, let's initialize all the nodes one-by-one
+        for node in node_touch:
+            # Collect all the incoming inputs, including feedback:
+            incoming_inputs_forward=H.predecessors(node)
+            incoming_inputs_feedback=[i for i in G.predecessors(node) \
+                                        if i not in incoming_inputs_forward]
+
+            # Let's initiate TF Node:
+            tf_node=GenFuncCell(harbor=node_harbors[node],
+                               state_fs=\
+                               [f['type'] for f in current_info['functions']], 
+                               out_fs=[], 
+                               state_fs_kwargs=\
+        utility_functions.assemble_function_kwargs(current_info['functions'],
+                                                   node),
+                               out_fs_kwargs=[],
+                               memory_kwargs={},
+                               output_size=node_out_size[node], 
+                               state_size=node_state_size[node], 
+                               scope=node)
+            repo[node]=tf_node
+
+
+
+            #                      STEP 7
+            #      ######          ######          ######      
+            #       ####################################       
+            #      ######          ######          ######      
+
+
+
+
+
+
+            #                      STEP 8
+            #      ######          ######          ######      
+            #       ####################################       
+            #      ######          ######          ######      
+
+
+
+
+
+
+            #                      STEP 9
+            #      ######          ######          ######      
+            #       ####################################       
+            #      ######          ######          ###### 
+
+
+
+
+
+    
