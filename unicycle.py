@@ -417,11 +417,6 @@ with tf.Graph().as_default():
 
         # Now, let's initialize all the nodes one-by-one
         for node in node_touch[1:]:
-            # Collect all the incoming inputs, including feedback:
-            incoming_inputs_forward=H.predecessors(node)
-            incoming_inputs_feedback=[i for i in G.predecessors(node) \
-                                        if i not in incoming_inputs_forward]
-
             current_info=fetch_node(node)
 
             # Let's initiate TF Node:
@@ -441,34 +436,34 @@ with tf.Graph().as_default():
             repo[node]=tf_node
 
 
+        # Now that the TF Nodes have been initialized, we build the Graph by
+        # calling each Node with the appropriate inputs from the other Nodes:
+        for node in node_touch[1:]:
+            tf_node=repo[node]
+            # Collect all the incoming inputs, including feedback:
+            incoming_inputs_forward=H.predecessors(node)
+            incoming_inputs_feedback=[i for i in G.predecessors(node) \
+                                        if i not in incoming_inputs_forward]
+
+            current_info=fetch_node(node)
+
+            # Assemble the correct inputs:
+            # Inputs are {'nickname':Tensor}
+            # First the forward inputs:
+            inputs={i:repo[i].output for i in incoming_inputs_forward}
+            # Then the backwards inputs:
+            for i in incoming_inputs_feedback:
+                inputs[i]=repo[i].state_old
+
+            # Call the node with the correct inputs
+            tf_node(inputs)
+
+
 
             #                      STEP 7
             #      ######          ######          ######      
             #       ####################################       
             #      ######          ######          ######      
 
-
-
-
-
-
-            #                      STEP 8
-            #      ######          ######          ######      
-            #       ####################################       
-            #      ######          ######          ######      
-
-
-
-
-
-
-            #                      STEP 9
-            #      ######          ######          ######      
-            #       ####################################       
-            #      ######          ######          ###### 
-
-
-
-
-
-    
+        # Training goes here
+        
