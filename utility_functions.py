@@ -3,8 +3,9 @@ Unicycle Utility Functions
 """
 
 from math import floor, ceil
+import tensorflow as tf
 
-def create_kwargs_conv(fn, name):
+def create_kwargs_conv(fn, input_size, name):
     # This function takes the abstract JSON representation and prepares the
     # correct function-ready kwarg collection
     out_dict={}
@@ -12,7 +13,7 @@ def create_kwargs_conv(fn, name):
     assert fn['type']=='conv', 'Type has to be CONV, but is %s'%(fn['type'])
     filter_tensor=tf.get_variable('filter_tensor_%s'%(name),
                                   fn['filter_size']\
-                                  +[properlyScaled(repo[fn[name]][1])]\
+                                  +[input_size[-1]]\
                                   +[fn['num_filters']],
                                 initializer=tf.random_uniform_initializer(0,1)
                                  )
@@ -22,9 +23,9 @@ def create_kwargs_conv(fn, name):
     out_dict['name']=str(name) if isinstance(name, basestring) \
                                else 'conv_%s'%(str(randint(1,1000)))
 
-    return out_dict
+    return out_dict, calc_size_after(input_size,fn)
 
-def create_kwargs_maxpool(fn, name):
+def create_kwargs_maxpool(fn, input_size, name):
     # This function takes the abstract JSON representation and prepares the
     # correct function-ready kwarg collection
     out_dict={}
@@ -36,9 +37,9 @@ def create_kwargs_maxpool(fn, name):
     out_dict['padding']=fn['padding']
     out_dict['name']=str(name) if isinstance(name, basestring) \
                                else 'maxpool_%s'%(str(randint(1,1000)))
-    return out_dict
+    return out_dict, calc_size_after(input_size,fn)
 
-def create_kwargs_relu(fn, name):
+def create_kwargs_relu(fn, input_size, name):
     # This function takes the abstract JSON representation and prepares the
     # correct function-ready kwarg collection
     out_dict={}
@@ -47,9 +48,9 @@ def create_kwargs_relu(fn, name):
 
     out_dict['name']=str(name) if isinstance(name, basestring) \
                                else 'relu_%s'%(str(randint(1,1000)))
-    return out_dict
+    return out_dict, calc_size_after(input_size,fn)
 
-def create_kwargs_norm(fn, name):
+def create_kwargs_norm(fn, input_size, name):
     # This function takes the abstract JSON representation and prepares the
     # correct function-ready kwarg collection
     out_dict={}
@@ -61,9 +62,9 @@ def create_kwargs_norm(fn, name):
     out_dict['alpha']=fn['alpha']
     out_dict['name']=str(name) if isinstance(name, basestring) \
                                else 'norm_%s'%(str(randint(1,1000)))
-    return out_dict
+    return out_dict, calc_size_after(input_size,fn)
 
-def create_kwargs_fc(fn):
+def create_kwargs_fc(fn, input_size):
     # This function takes the abstract JSON representation and prepares the
     # correct function-ready kwarg collection
     out_dict={}
@@ -71,23 +72,24 @@ def create_kwargs_fc(fn):
     assert fn['type']=='fc', 'Type has to be FC, but is %s'%(fn['type'])
     
     out_dict['output_size']=fn['output_size']
-    return out_dict
+    return out_dict, calc_size_after(input_size,fn)
 
-def assemble_function_kwargs(functions,nickname):
+def assemble_function_kwargs(functions,input_size,nickname):
     to_be_passed_in_state_kwargs=[]
+    cur_size=input_size[:]
     for f in functions:
         f_type=f['type']
         temp_kwarg={}
         if f_type=='conv':
-            temp_kwarg=create_kwargs_conv(f, nickname)
+            temp_kwarg,cur_size=create_kwargs_conv(f, cur_size, nickname)
         elif f_type=='maxpool':
-            temp_kwarg=create_kwargs_maxpool(f, nickname)
+            temp_kwarg,cur_size=create_kwargs_maxpool(f, cur_size, nickname)
         elif f_type=='relu':
-            temp_kwarg=create_kwargs_relu(f, nickname)
+            temp_kwarg,cur_size=create_kwargs_relu(f, cur_size, nickname)
         elif f_type=='norm':
-            temp_kwarg=create_kwargs_norm(f, nickname)
+            temp_kwarg,cur_size=create_kwargs_norm(f, cur_size, nickname)
         elif f_type=='fc':
-            temp_kwarg=create_kwargs_fc(f)
+            temp_kwarg,cur_size=create_kwargs_fc(f, cur_size)
         to_be_passed_in_state_kwargs.append(temp_kwarg)
     return to_be_passed_in_state_kwargs
 

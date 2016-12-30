@@ -6,7 +6,10 @@ from unicycle_settings import *
 import tensorflow as tf
 
 class Harbor(object):
-    def __init__(self,desired_size,policy=HARBOR_MASTER_DEFAULT,node_name=''):
+    def __init__(self,
+                 desired_size,
+                 policy=HARBOR_MASTER_DEFAULT,
+                 node_name=''):
         self.desired_size=desired_size
         # Policy is a tuple of (pooling,combination), where pooling is the
         # type of pooling to be performed on the input and combination is the

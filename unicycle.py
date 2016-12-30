@@ -416,25 +416,28 @@ with tf.Graph().as_default():
         repo={ first:first_cell }
 
         # Now, let's initialize all the nodes one-by-one
-        for node in node_touch:
+        for node in node_touch[1:]:
             # Collect all the incoming inputs, including feedback:
             incoming_inputs_forward=H.predecessors(node)
             incoming_inputs_feedback=[i for i in G.predecessors(node) \
                                         if i not in incoming_inputs_forward]
 
+            current_info=fetch_node(node)
+
             # Let's initiate TF Node:
             tf_node=GenFuncCell(harbor=node_harbors[node],
                                state_fs=\
-                               [f['type'] for f in current_info['functions']], 
+                        [str(f['type']) for f in current_info['functions']], 
                                out_fs=[], 
                                state_fs_kwargs=\
         utility_functions.assemble_function_kwargs(current_info['functions'],
-                                                   node),
+                                            node_harbors[node].desired_size,
+                                            node),
                                out_fs_kwargs=[],
                                memory_kwargs={},
                                output_size=node_out_size[node], 
                                state_size=node_state_size[node], 
-                               scope=node)
+                               scope=str(node))
             repo[node]=tf_node
 
 

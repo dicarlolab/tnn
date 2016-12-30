@@ -166,5 +166,3 @@ class GenFuncCell(RNNCell):
                                   tf.constant_initializer(0.1))
         mulss = tf.nn.relu(tf.matmul(reshape, weights) + biases)
         return mulss
-
-    
