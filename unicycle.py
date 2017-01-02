@@ -369,7 +369,7 @@ while not all(node_out_size.values()):
                 # Find the size of the state:
                 current_state_size=utility_functions.chain_size_crunch(\
                                        desired_size,current_info['functions'])
-                
+
                 # Find the size of the output (same as state for now):
                 current_out_size=current_state_size[:]
 
@@ -456,7 +456,7 @@ with tf.Graph().as_default():
             inputs={i:repo[i].state for i in incoming_inputs_forward}
             # Then the backwards inputs:
             for i in incoming_inputs_feedback:
-                inputs[i]=repo[i].state_old
+                inputs[i]=repo[i].state
 
             # Call the node with the correct inputs
             tf_node(inputs)
