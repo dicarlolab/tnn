@@ -335,39 +335,42 @@ while not all(node_out_size.values()):
                 dbgr('Counting up the sizes for node %s'%(node),
                      newline=False)
                 # All the predecessors have been traversed, we can now proceed
+
                 # First, gather all the necessary info about the current node:
                 current_info=fetch_node(node)
 
+                # # Change the past_1_present_0 value to length from root
+                # # Then, gather the sizes of all incoming nodes into a dict:
+                # # {'nickname':(size,past_1_present_0)}
+                # incoming_sizes={}
+                # for pred in G.predecessors(node):
+                #     if pred in H.predecessors(node):
+                #         # If the predecessor is in H then it's forward only
+                #         incoming_sizes[pred]=(node_out_size[pred],0)
+                #     else:
+                #         # If it's not in H, then it's a past feedback link
+                #         incoming_sizes[pred]=(node_out_size[pred],1)
+
                 # Then, gather the sizes of all incoming nodes into a dict:
-                # {'nickname':(size,past_1_present_0)}
+                # {'nickname':size}
                 incoming_sizes={}
                 for pred in G.predecessors(node):
-                    if pred in H.predecessors(node):
-                        # If the predecessor is in H then it's forward only
-                        incoming_sizes[pred]=(node_out_size[pred],0)
-                    else:
-                        # If it's not in H, then it's a past feedback link
-                        incoming_sizes[pred]=(node_out_size[pred],1)
-
-                # Now get information from JSON about HarborMaster policy:
-                current_policy=HARBOR_MASTER_DEFAULT if 'policy' \
-                            not in current_info else current_info['policy']
-
-                # Find the desired input size after Harbor processing
-                desired_size=utility_functions.reshape_size_to(incoming_sizes,
-                                                               current_policy)
+                    incoming_sizes[pred]=node_out_size[pred]
 
                 # Create a Harbor instance
-                node_harbors[node]=Harbor(desired_size,
-                                      policy=current_policy,
-                                      node_name=node)
+                node_harbors[node]=Harbor(incoming_sizes,
+                                          policy=current_policy['policy'] if \
+                                           'policy' in current_info else None,
+                                          node_name=node)
+
+                # Extract the desired_size from Harbor:
+                desired_size=node_harbors[node].get_desired_size()
 
                 # Find the size of the state:
                 current_state_size=utility_functions.chain_size_crunch(\
                                        desired_size,current_info['functions'])
-                print desired_size,current_state_size
-
-                # Find the size of the output:
+                
+                # Find the size of the output (same as state for now):
                 current_out_size=current_state_size[:]
 
                 # Update node_out_size and node_state_size

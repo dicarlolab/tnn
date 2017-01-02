@@ -72,5 +72,26 @@ Step 7
 Let's kick ass
 
 
+-------
+
+TO-DO
+
+Things to do by next iteration of Unicycle:
+
+- Merge resize_shape_to function into Harbor class as a method, do all the input shape calculations inside of Harbor
+
+- Fix Unrolling time dependence on previous state (t-1 fix)
+
+- Use tf-utils for training
+
+- Support for many Placeholders and Nodes with no predecessors - run down the graph from all of these nodes and merge together.
+
+- Class-ify Unicycle, add call method
+
+- Longest path Harbor Policy as default policy
+
+- Think about Harbor Master Policy as a function that takes a list of paths and/or an arbitrary set of inputs depending on what the function is.
+
+
 To be updated soon ...
 

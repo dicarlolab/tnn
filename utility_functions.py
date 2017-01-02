@@ -98,15 +98,9 @@ def assemble_function_kwargs(functions,input_size,nickname):
 
 
 
-def reshape_size_to(incoming_sizes,current_policy):
-    # Find the max and min shape sizes in all the inputs:
-    # incoming_sizes.items() = ( 'nickname' , ([size here],1) )
-    max_shape=max(incoming_sizes.items(), key=lambda x: x[1][0][1])[1][0]
-    min_shape=min(incoming_sizes.items(), key=lambda x: x[1][0][1])[1][0]
-
-    return min_shape if current_policy[0] in ['max','avg'] else max_shape
 
 def calc_size_after(input_size,function_):
+    print input_size, 'INPUT YOOOO'
     if function_['type']=='conv':
         if function_['padding']=='same':
             out_height = int(ceil(float(input_size[1]) \

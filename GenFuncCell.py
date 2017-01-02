@@ -114,7 +114,8 @@ class GenFuncCell(RNNCell):
     def __call__(self, input_): 
         # Input is a dict {'nickname':Tensor}
         prev=self.harbor(input_)
-        dbgr('>> GenFuncCell of node %s - post-Harbor size %s'%(self._scope,
+        dbgr('>> GenFuncCell call of node %s - post-Harbor size %s'%(
+                                                self._scope,
                                                 prev.get_shape().as_list()) )
 
         # Each before-the-memory function, when run, will update the prev 
@@ -129,16 +130,16 @@ class GenFuncCell(RNNCell):
             # the current function, and collect the output
             prev=cur_f(prev,**cur_f_args)
 
-        dbgr('>> GenFuncCell of node %s - post-state-func size %s'%(self._scope,
+        dbgr('>> GenFuncCell of node %s - post-state size %s'%(self._scope,
                                                 prev.get_shape().as_list()) )
-        dbgr('>> GenFuncCell of node %s - pre-memory state size %s'%(self._scope,
+        dbgr('>> GenFuncCell of node %s - pre-memory state %s'%(self._scope,
                                            self.state.get_shape().as_list()) )
         # Now, we update the memory!
         self.state_old=self.state
         self.state=self.memory(in_layer=prev, **self._memory_kwargs)
 
-        dbgr('>> GenFuncCell of node %s - post-memory state size %s'%(self._scope,
-                                            self.state.get_shape().as_list()) )
+        dbgr('>> GenFuncCell of node %s - post-memory state %s'%(self._scope,
+                                        self.state.get_shape().as_list()) )
 
         # Each after-the-memory function, when run, will update the 
         # self.output value and pass that to the next function
@@ -153,7 +154,7 @@ class GenFuncCell(RNNCell):
             self.output=cur_f(self.output,**cur_f_args)
 
         dbgr('>> GenFuncCell of node %s - post-out-func size %s'%(self._scope,
-                                            self.output.get_shape().as_list()) )
+                                        self.output.get_shape().as_list()) )
 
         return self.output, self.state
 
@@ -173,8 +174,8 @@ class GenFuncCell(RNNCell):
         self.output = tf.mul(self.state, decay_factor) + in_layer
         return self.output
 
-    def fc(input_, output_size):
-        # Move everything into depth so we can perform a single matrix multiply.
+    def fc(self, input_, output_size):
+        # Move everything into depth so we can perform a single matrix mult.
         batch_size=input_.get_shape()[0].value
         name = tf.get_variable_scope().name
         reshape = tf.reshape(input_, [batch_size, -1])
@@ -182,8 +183,9 @@ class GenFuncCell(RNNCell):
         weights = tf.get_variable('weights_%s'%(self._scope), 
                         shape=[dim, output_size], 
                         initializer=tf.random_normal_initializer(0.5, 0.1))
-        biases = _variable_on_cpu('biases_%s'%(scope), 
-                                  [output_size], 
-                                  tf.constant_initializer(0.1))
+        biases = tf.get_variable('biases_%s'%(self._scope), 
+                                 shape=[output_size], 
+                                 initializer=tf.constant_initializer(0.1))
         mulss = tf.nn.relu(tf.matmul(reshape, weights) + biases)
+        dbgr('FC COMPLETE FOR %s'%(self._scope.upper()))
         return mulss
