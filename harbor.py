@@ -8,8 +8,9 @@ import tensorflow as tf
 class Harbor(object):
     def __init__(self,
                  incoming_sizes,
+                 node_name='',
                  policy=None,
-                 node_name=''):
+                 **policy_kwargs):
         # Policy is a tuple of (pooling,combination), where pooling is the
         # type of pooling to be performed on the input and combination is the
         # type of combination function to use when combining all the inputs
