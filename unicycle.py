@@ -106,7 +106,7 @@ import json
 # Import Unicycle-specific things
 from unicycle_settings import *
 import utility_functions
-from harbor import Harbor, Harbor_Dummy
+from harbor import Harbor, Harbor_Dummy, Policy
 from GenFuncCell import GenFuncCell
 
 
@@ -276,8 +276,8 @@ class Unicycle(object):
         forward=[(fr,to) for (fr,to) in G.edges() \
                     if not any([to in i for i in \
                                     # All paths lead to Rome! (from all roots to `to`)
-                                    chain(*[nx.all_simple_paths(G,first,fr) \
-                                                for first in root_nodes])
+                                list(chain(*[nx.all_simple_paths(G,first,fr) \
+                                            for first in root_nodes]))
                               ])
                 ]
 
@@ -409,16 +409,20 @@ class Unicycle(object):
                         #         incoming_sizes[pred]=(node_out_size[pred],1)
 
                         # Then, gather the sizes of all incoming nodes into a dict:
-                        # {'nickname':size}
+                        # {'nickname':(size,all_simple_paths)}
                         incoming_sizes={}
                         for pred in G.predecessors(node):
-                            incoming_sizes[pred]=node_out_size[pred]
+                            incoming_sizes[pred]=(node_out_size[pred],
+                                    list(chain(*[nx.all_simple_paths(H,st,pred) 
+                                                for st in root_nodes])))
+
+                        # Create a Policy instance
+                        current_policy=Policy()
 
                         # Create a Harbor instance
                         node_harbors[node]=Harbor(incoming_sizes,
-                                                  policy=current_policy['policy'] if \
-                                                   'policy' in current_info else None,
-                                                  node_name=node)
+                                          policy=current_policy,
+                                          node_name=node)
 
                         # Extract the desired_size from Harbor:
                         desired_size=node_harbors[node].get_desired_size()
@@ -554,4 +558,6 @@ class Unicycle(object):
                        'alpha': 0.0001111,
                        'beta': 0.00001111}
 
-
+if __name__=='__main__':
+    a=Unicycle()
+    b=a.alexnet_demo_out()
