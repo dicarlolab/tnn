@@ -26,11 +26,10 @@ class Harbor(object):
         # inputs is a dictionary of {'nickname':Tensor}
         big_input_list=[]
         for incoming_input in inputs:
-            print('Harbor call of cell %s for resizing node %s'%(
+            print 'Harbor call of cell %s for resizing node %s'%(
                                                             self.name,
                                                             incoming_input)
-
-                 )
+            print 'Inputs:',inputs
             input_=inputs[incoming_input]
             input_shape=input_.get_shape().as_list()
             
@@ -66,7 +65,7 @@ class Harbor(object):
                     # Not sure if tf.image.resize_images is trainable...
                     pool = tf.image.resize_images(input_, self.desired_size[1:3])
 
-                print '>> Harbor of %s - resizing %s, want %s and got %s'%\
+                print '  >> Harbor of %s - resizing %s, want %s and got %s'%\
                                                 (self.name,
                                                  incoming_input,
                                                  self.desired_size,
@@ -85,7 +84,7 @@ class Harbor(object):
         elif self.combination_type=='sum':
             out = tf.add_n(big_input_list,name=self.name+'_harbor_sum')
         
-        print '>> Harbor of %s - out size %s'%(self.name,
+        print '  >> Harbor of %s - out size %s'%(self.name,
                                                out.get_shape().as_list())
 
         # Finally, return the resulting Tensor
@@ -107,8 +106,13 @@ class Harbor(object):
 
 
 class Harbor_Dummy(object):
-    def __init__(self,node_name=''):
+    def __init__(self,
+                 desired_size,
+                 node_name='',
+                 input_=False):
         self.name=node_name
+        self.desired_size=desired_size
+        self.input_=input_
 
     def __call__(self,inputs):
-        inputs[0]
+        return inputs

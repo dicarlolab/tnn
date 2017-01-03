@@ -128,6 +128,7 @@ import argparse
 import os
 import sys
 from random import randint
+from itertools import chain
 
 # Import Network-X and JSON support libraries
 import networkx as nx
@@ -185,7 +186,9 @@ nodes=json_data['nodes']
 links=json_data['links']
 # backward=json_data['backward']
 
-first=str(nodes[0]['nickname'])
+# By old convention, the first node is literally the first node in JSON
+# Deprecated
+# first=str(nodes[0]['nickname'])
 final=str(nodes[-1]['nickname'])
 
 # Let's make sure that pooling doesn't appear on its own in the Cell:
@@ -219,6 +222,13 @@ G.add_edges_from(links_tuples)
 dbgr('Network-X Raw Graph created! Nodes: ',newline=False)
 dbgr('    '+'\n    '.join(sorted(G.nodes())))
 
+# Now we find the starting nodes - these will be nodes without predecessors,
+# nodes that are either 
+#   a) input nodes with placeholders
+#   b) bias nodes
+# The list of these nodes will be collected in the `root_nodes` variable
+root_nodes=[i for i in G.nodes() if len(G.predecessors(i))==0]
+
 # Draw the Graph
 # dbgr('Drawing graph')
 # pos=nx.circular_layout(G)
@@ -240,13 +250,15 @@ dbgr('    '+'\n    '.join(sorted(G.nodes())))
 
 dbgr('======\nSTEP 3\n BFS Dependency Parse\n====================')
 
-# Find the longest simple path through the Graph, and save it as "spine"
-dbgr('Finding all the forward dependeny links in the Graph using BFS...',1)
-# spine=max([i for i in nx.all_simple_paths(G,first,final)], key=len)
-forward_bfs=list(nx.bfs_edges(G,first))
-dbgr('done!')
-dbgr('Links: ',newline=False)
-dbgr('    '+'\n    '.join([str(i) for i in forward_bfs]))
+dbgr('BFS Dependency Parse Temporarily Disabled')
+
+# # Find the longest simple path through the Graph, and save it as "spine"
+# dbgr('Finding all the forward dependeny links in the Graph using BFS...',1)
+# # spine=max([i for i in nx.all_simple_paths(G,first,final)], key=len)
+# forward_bfs=list(nx.bfs_edges(G,first))
+# dbgr('done!')
+# dbgr('Links: ',newline=False)
+# dbgr('    '+'\n    '.join([str(i) for i in forward_bfs]))
 
 
 
@@ -260,11 +272,16 @@ dbgr('    '+'\n    '.join([str(i) for i in forward_bfs]))
 dbgr('======\nSTEP 4\n Clone Forward-Only Graph Creation\n==================')
 
 dbgr('Finding all non-ancestral dependeny links in the Graph...',1)
-# Let's find auxillary edges that are not in bfs traverse
 # Gotta love string comprehensions :)
 # Add only those edges that lead forward (the target is not an ancestor)
 forward=[(fr,to) for (fr,to) in G.edges() \
-            if not any([to in i for i in nx.all_simple_paths(G,first,fr)])]
+            if not any([to in i for i in \
+                            # All paths lead to Rome! (from all roots to `to`)
+                            chain(*[nx.all_simple_paths(G,first,fr) \
+                                        for first in root_nodes])
+                      ])
+        ]
+
 dbgr('done!')
 dbgr('Links: ',newline=False)
 dbgr('    '+'\n    '.join([str(i) for i in forward]))
@@ -273,6 +290,10 @@ dbgr('    '+'\n    '.join([str(i) for i in forward]))
 H=nx.DiGraph(forward)
 dbgr('Nodes of forward-only Graph: ',newline=False)
 dbgr('    '+'\n    '.join(sorted(H.nodes())))
+
+# Print all root nodes
+dbgr('Root nodes: ',newline=False)
+dbgr('    '+'\n    '.join(sorted(root_nodes)))
 
 
 
@@ -286,13 +307,17 @@ dbgr('    '+'\n    '.join(sorted(H.nodes())))
 dbgr('======\nSTEP 5\n Input Size Calculation\n=====================')
 
 # Helper function to help with fetching node data from the big dump
-def fetch_node(nickname, node_storage=nodes):
-    # Get the dictionary of info for a particular node by nickname
-    matching=[i for i in node_storage if i['nickname']==nickname]
-    if len(matching)==0: return None
-    if len(matching)>1:
-        raise Exception('More than 1 node named "%s"'%(nickname))
-    return matching[0]
+def fetch_node(nickname='no_nickname_given', node_storage=nodes, **kwargs):
+    if len(kwargs)>0:
+        dict_to_iterate=kwargs
+    else:
+        dict_to_iterate={'nickname':nickname}
+    matching=[]
+    for k,v in dict_to_iterate.items():
+        contains_this_val=[i for i in [ii for ii in node_storage if k in ii] \
+                                      if i[k]==v]
+        matching=matching+[i for i in contains_this_val if i not in matching]
+    return matching
 
 dbgr('Starting the node traversal for size calculation. If this step hangs \
 check the node_out_size validation loop in <Step 5>.')
@@ -301,27 +326,61 @@ check the node_out_size validation loop in <Step 5>.')
 # traversed or not (if it's size has been calculated)
 node_out_size={i:None for i in H.nodes()}
 node_state_size={i:None for i in H.nodes()}
-node_harbors={first:Harbor_Dummy()}
+node_harbors={}
+# Create a list to store the correct initialization order for the nodes:
+node_input_touch=[]
+node_bias_touch=[]
+node_touch=[]
 
-dbgr('Calculating Input size...',1)
+# Calculate the input sizes for Placeholders and Biases
+dbgr('Calculating Input sizes...',1)
+
 # We assume that input image size has been specified
-input_node=fetch_node(first)
-if 'batch_size' in input_node: BATCH_SIZE=input_node['batch_size']
-assert 'functions' in input_node, 'Input node has no functions!'
-assert 'output_size' in input_node['functions'][0], 'No input size specified!'
-# [batch, height, width, channels], batch is usually set to None
-node_out_size[first]=[BATCH_SIZE]+input_node['functions'][0]['output_size']
-node_state_size[first]=node_out_size[first][:]
+input_nodes=fetch_node(type='placeholder')
+bias_nodes=fetch_node(type='bias')
+
+# Make sure all the batch sizes are the same:
+assert len(set([i['batch_size'] for i in input_nodes]))==1, 'Batches differ!'
+BATCH_SIZE=input_nodes[0]['batch_size']
+
+# Make sure the functions are there, and that the output sizes are specified
+# Then, specify the node state and output sizes
+# Then, add a Dummy Harbor for that input
+# Then, add to node_touch for proper ordering
+for i in input_nodes:
+    this_name=i['nickname']
+    assert 'functions' in i, 'Input node %s has no functions!'%(this_name)
+    assert 'output_size' in i['functions'][0], 'Input node %s has no output\
+                                            size specified!'%(this_name)
+    # [batch, height, width, channels], batch is usually set to None
+    node_out_size[this_name]=[BATCH_SIZE]+i['functions'][0]['output_size']
+    node_state_size[this_name]=node_out_size[this_name][:]
+    node_harbors[this_name]=Harbor_Dummy(node_out_size[this_name],input_=True)
+    node_input_touch.append(this_name)
+
+# Same for bias terms
+# Make sure the functions are there, and that the output sizes are specified
+# Then, specify the node state and output sizes
+# Then, add a Dummy Harbor for that input
+# Then, add to node_touch for proper ordering
+for i in bias_nodes:
+    this_name=i['nickname']
+    assert 'functions' in i, 'Bias node %s has no functions!'%(this_name)
+    assert 'output_size' in i['functions'][0], 'Bias node %s has no output\
+                                            size specified!'%(this_name)
+    # [batch, height, width, channels], batch is usually set to None
+    node_out_size[this_name]=[BATCH_SIZE]+i['functions'][0]['output_size']
+    node_state_size[this_name]=node_out_size[this_name][:]
+    node_harbors[this_name]=Harbor_Dummy(node_out_size[this_name])
+    node_bias_touch.append(this_name)
+
 dbgr('done!')
 
-# Create a list to store the correct initialization order for the nodes:
-node_touch=[first]
-
-print 'Starting Node Sizes:'
+dbgr('Starting Node Output Sizes:',newline=False)
 for i in sorted(node_out_size):
-    print '   ',i.ljust(max([len(j) for j in sorted(node_out_size)])),\
-          ':',node_out_size[i]
-print
+    dbgr('   '+i.ljust(max([len(j) for j in sorted(node_out_size)])) \
+         +':'+str(node_out_size[i]),newline=False)
+dbgr(newline=False)
 
 # Now let's write a loop that check the dependencies of nodes to make sure
 # everything preceding a node has been calculated:
@@ -332,12 +391,11 @@ while not all(node_out_size.values()):
             continue
         else:
             if all([node_out_size[i] for i in H.predecessors(node)]):
-                dbgr('Counting up the sizes for node %s'%(node),
-                     newline=False)
+                dbgr('Counting up the sizes for node %s'%(node), 1)
                 # All the predecessors have been traversed, we can now proceed
 
                 # First, gather all the necessary info about the current node:
-                current_info=fetch_node(node)
+                current_info=fetch_node(node)[0]
 
                 # # Change the past_1_present_0 value to length from root
                 # # Then, gather the sizes of all incoming nodes into a dict:
@@ -381,11 +439,19 @@ while not all(node_out_size.values()):
                 # Tensor creation order
                 node_touch.append(node)
 
+                dbgr(' ... done!',newline=False)
+
                 # break the for loop after modifying the node_out_size dict
                 break
             else:
                 # There are other nodes that need to be calculated, skip
                 continue
+dbgr()
+dbgr('Final Node Output Sizes:',newline=False)
+for i in sorted(node_out_size):
+    dbgr('   '+i.ljust(max([len(j) for j in sorted(node_out_size)])) \
+         +':'+str(node_out_size[i]),newline=False)
+dbgr(newline=False)
 
 dbgr('\nAll sizes calculated!')
 
@@ -399,74 +465,90 @@ dbgr('\nAll sizes calculated!')
 dbgr('======\nSTEP 6\n TF Node Creation\n========================')
 
 
-with tf.Graph().as_default():
-    # with tf.Graph().device(device_for_node):    
-    sess = tf.Session()
-    with sess.as_default():
+# with tf.Graph().as_default():
+#     # with tf.Graph().device(device_for_node):    
+#     sess = tf.Session()
+#     with sess.as_default():
 
-        # Initialize the first TF Placeholder to be pushed through the Graph
-        first_cell=GenFuncCell(harbor=node_harbors[first],
-                               state_fs=[], 
-                               out_fs=[], 
-                               state_fs_kwargs=[],
-                               out_fs_kwargs=[],
-                               memory_kwargs={},
-                               output_size=node_out_size[first], 
-                               state_size=node_state_size[first], 
-                               scope=first)
+#         # Initialize the first TF Placeholder to be pushed through the Graph
+#         first_cell=GenFuncCell(harbor=node_harbors[first],
+#                                state_fs=[], 
+#                                out_fs=[], 
+#                                state_fs_kwargs=[],
+#                                out_fs_kwargs=[],
+#                                memory_kwargs={},
+#                                output_size=node_out_size[first], 
+#                                state_size=node_state_size[first], 
+#                                scope=first)
 
-        # Repository of all the Tensor outputs for each Node in the TF Graph
-        repo={ first:first_cell }
+# Repository of all the Tensor outputs for each Node in the TF Graph
+repo={}
 
-        # Now, let's initialize all the nodes one-by-one
-        for node in node_touch[1:]:
-            current_info=fetch_node(node)
+for i in node_input_touch+node_bias_touch:
+    current_info=fetch_node(node)[0]
 
-            # Let's initiate TF Node:
-            tf_node=GenFuncCell(harbor=node_harbors[node],
-                               state_fs=\
-                        [str(f['type']) for f in current_info['functions']], 
-                               out_fs=[], 
-                               state_fs_kwargs=\
-        utility_functions.assemble_function_kwargs(current_info['functions'],
-                                            node_harbors[node].desired_size,
-                                            node),
-                               out_fs_kwargs=[],
-                               memory_kwargs={},
-                               output_size=node_out_size[node], 
-                               state_size=node_state_size[node], 
-                               scope=str(node))
-            repo[node]=tf_node
+    #Initialize the TF Placeholder for this input
+    this_input=GenFuncCell(harbor=node_harbors[i],
+                           state_fs=[], 
+                           out_fs=[], 
+                           state_fs_kwargs=[],
+                           out_fs_kwargs=[],
+                           memory_kwargs={},
+                           output_size=node_out_size[i], 
+                           state_size=node_state_size[i], 
+                           scope=i)
 
+    repo[i]=this_input
 
-        # Now that the TF Nodes have been initialized, we build the Graph by
-        # calling each Node with the appropriate inputs from the other Nodes:
-        for node in node_touch[1:]:
-            tf_node=repo[node]
-            # Collect all the incoming inputs, including feedback:
-            incoming_inputs_forward=H.predecessors(node)
-            incoming_inputs_feedback=[i for i in G.predecessors(node) \
-                                        if i not in incoming_inputs_forward]
+# Now, let's initialize all the nodes one-by-one
+for node in node_touch:
+    current_info=fetch_node(node)[0]
 
-            current_info=fetch_node(node)
-
-            # Assemble the correct inputs:
-            # Inputs are {'nickname':Tensor}
-            # First the forward inputs:
-            inputs={i:repo[i].state for i in incoming_inputs_forward}
-            # Then the backwards inputs:
-            for i in incoming_inputs_feedback:
-                inputs[i]=repo[i].state
-
-            # Call the node with the correct inputs
-            tf_node(inputs)
+    # Let's initiate TF Node:
+    tf_node=GenFuncCell(harbor=node_harbors[node],
+                       state_fs=\
+                [str(f['type']) for f in current_info['functions']], 
+                       out_fs=[], 
+                       state_fs_kwargs=\
+utility_functions.assemble_function_kwargs(current_info['functions'],
+                                    node_harbors[node].desired_size,
+                                    node),
+                       out_fs_kwargs=[],
+                       memory_kwargs={},
+                       output_size=node_out_size[node], 
+                       state_size=node_state_size[node], 
+                       scope=str(node))
+    repo[node]=tf_node
 
 
+# Now that the TF Nodes have been initialized, we build the Graph by
+# calling each Node with the appropriate inputs from the other Nodes:
+for node in node_touch:
+    tf_node=repo[node]
+    # Collect all the incoming inputs, including feedback:
+    incoming_inputs_forward=H.predecessors(node)
+    incoming_inputs_feedback=[i for i in G.predecessors(node) \
+                                if i not in incoming_inputs_forward]
 
-            #                      STEP 7
-            #      ######          ######          ######      
-            #       ####################################       
-            #      ######          ######          ######      
+    current_info=fetch_node(node)[0]
 
-        # Training goes here
+    # Assemble the correct inputs:
+    # Inputs are {'nickname':Tensor}
+    # First the forward inputs:
+    inputs={i:repo[i].state for i in incoming_inputs_forward}
+    # Then the backwards inputs:
+    for i in incoming_inputs_feedback:
+        inputs[i]=repo[i].state
+
+    # Call the node with the correct inputs
+    tf_node(inputs)
+
+
+
+    #                      STEP 7
+    #      ######          ######          ######      
+    #       ####################################       
+    #      ######          ######          ######      
+
+# Training goes here
 

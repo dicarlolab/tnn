@@ -37,7 +37,8 @@ class GenFuncCell(RNNCell):
                          'maxpool':tf.nn.max_pool,
                          'relu':tf.nn.relu,
                          'norm':tf.nn.local_response_normalization,
-                         'fc':self.fc}
+                         'fc':self.fc,
+                         'placeholder':tf.placeholder}
         """
         Input explanation:
 
@@ -114,9 +115,15 @@ class GenFuncCell(RNNCell):
     def __call__(self, input_): 
         # Input is a dict {'nickname':Tensor}
         prev=self.harbor(input_)
-        dbgr('>> GenFuncCell call of node %s - post-Harbor size %s'%(
+        if isinstance(prev,type(tf.float32)):
+            self.state_old=self.state
+            self.state=input_
+            self.output=input_
+            return self.output, self.state
+        dbgr('  >> GenFuncCell call of node %s - post-Harbor size %s'%(
                                                 self._scope,
-                                                prev.get_shape().as_list()) )
+                                                prev.get_shape().as_list()),
+                                                            newline=False)
 
         # Each before-the-memory function, when run, will update the prev 
         # value and pass that to the next function
@@ -130,16 +137,19 @@ class GenFuncCell(RNNCell):
             # the current function, and collect the output
             prev=cur_f(prev,**cur_f_args)
 
-        dbgr('>> GenFuncCell of node %s - post-state size %s'%(self._scope,
-                                                prev.get_shape().as_list()) )
-        dbgr('>> GenFuncCell of node %s - pre-memory state %s'%(self._scope,
-                                           self.state.get_shape().as_list()) )
+        dbgr('  >> GenFuncCell of node %s - post-state size %s'%(self._scope,
+                                                prev.get_shape().as_list()),
+                                                            newline=False)
+        dbgr('  >> GenFuncCell of node %s - pre-memory state %s'%(self._scope,
+                                           self.state.get_shape().as_list()),
+                                                            newline=False)
         # Now, we update the memory!
         self.state_old=self.state
         self.state=self.memory(in_layer=prev, **self._memory_kwargs)
 
-        dbgr('>> GenFuncCell of node %s - post-memory state %s'%(self._scope,
-                                        self.state.get_shape().as_list()) )
+        dbgr('  >> GenFuncCell of node %s - post-memory state %s'%(self._scope,
+                                        self.state.get_shape().as_list()),
+                                                            newline=False)
 
         # Each after-the-memory function, when run, will update the 
         # self.output value and pass that to the next function
@@ -153,8 +163,8 @@ class GenFuncCell(RNNCell):
             # the current function, and collect the output
             self.output=cur_f(self.output,**cur_f_args)
 
-        dbgr('>> GenFuncCell of node %s - post-out-func size %s'%(self._scope,
-                                        self.output.get_shape().as_list()) )
+        dbgr('  >> GenFuncCell of node %s - post-out-func size %s'% \
+                            (self._scope, self.output.get_shape().as_list()))
 
         return self.output, self.state
 
@@ -187,5 +197,4 @@ class GenFuncCell(RNNCell):
                                  shape=[output_size], 
                                  initializer=tf.constant_initializer(0.1))
         mulss = tf.nn.relu(tf.matmul(reshape, weights) + biases)
-        dbgr('FC COMPLETE FOR %s'%(self._scope.upper()))
         return mulss

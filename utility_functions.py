@@ -74,6 +74,17 @@ def create_kwargs_fc(fn, input_size):
     out_dict['output_size']=fn['output_size']
     return out_dict, calc_size_after(input_size,fn)
 
+def create_kwargs_ph(fn, input_size):
+    # This function takes the abstract JSON representation and prepares the
+    # correct function-ready kwarg collection
+    out_dict={}
+    assert 'type' in fn, 'Type of function not in function!'
+    assert fn['type']=='placeholder', 'Type has to be PLACEHOLDER, but is \
+                                                        %s'%(fn['type'])
+    
+    out_dict['shape']=input_size
+    return out_dict, calc_size_after(input_size,fn)
+
 def assemble_function_kwargs(functions,input_size,nickname):
     to_be_passed_in_state_kwargs=[]
     cur_size=input_size[:]
@@ -90,6 +101,8 @@ def assemble_function_kwargs(functions,input_size,nickname):
             temp_kwarg,cur_size=create_kwargs_norm(f, cur_size, nickname)
         elif f_type=='fc':
             temp_kwarg,cur_size=create_kwargs_fc(f, cur_size)
+        elif f_type=='placeholder':
+            temp_kwarg,cur_size=create_kwargs_ph(f, input_size)
         to_be_passed_in_state_kwargs.append(temp_kwarg)
     return to_be_passed_in_state_kwargs
 
@@ -100,7 +113,6 @@ def assemble_function_kwargs(functions,input_size,nickname):
 
 
 def calc_size_after(input_size,function_):
-    print input_size, 'INPUT YOOOO'
     if function_['type']=='conv':
         if function_['padding']=='same':
             out_height = int(ceil(float(input_size[1]) \
@@ -137,6 +149,9 @@ def calc_size_after(input_size,function_):
 
     elif function_['type']=='fc':
         return [input_size[0],function_['output_size']]
+
+    elif function_['type']=='ph':
+        return input_size
         
 def chain_size_crunch(input_size,funcs):
     # This applies calc_size_after() to every one of the funcs
