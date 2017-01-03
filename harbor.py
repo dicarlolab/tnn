@@ -124,6 +124,14 @@ class Policy(object):
                      input_val,
                      desired_size,
                      name=''):
+
+        def is_bigger(shape1,shape2):
+            # Return True if shape1 has more neurons than shape2, False o/w
+            if reduce(lambda x,y: x*y,shape1)>reduce(lambda x,y: x*y,shape2):
+                return True
+            else:
+                return False
+
         # If the number of dimensions in the input_shape is like an image:
         if len(input_shape)>2:
             # Final size of pooling is f = (i-k)/s + 1, 

@@ -108,6 +108,7 @@ from unicycle_settings import *
 import utility_functions
 from harbor import Harbor, Harbor_Dummy, Policy
 from GenFuncCell import GenFuncCell
+import imgs
 
 
 class Unicycle(object):
@@ -546,6 +547,8 @@ class Unicycle(object):
             # Call the node with the correct inputs
             tf_node(inputs)
 
+        # Emotional support
+        dbgr(imgs.centaur())
 
         return repo[node_touch[-1]]
 
@@ -559,5 +562,6 @@ class Unicycle(object):
                        'beta': 0.00001111}
 
 if __name__=='__main__':
+    print 'THIS\nIS\nA\nTEST\nUNICYCLE\nALEXNET\nINITIALIZATION'
     a=Unicycle()
     b=a.alexnet_demo_out()
