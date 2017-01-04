@@ -11,16 +11,6 @@ from harbor import Harbor, Harbor_Dummy
 
 verbose=True
 
-def dbgr(_string='', leave_line_open=0, newline=True):
-    if leave_line_open:
-        if verbose: print(_string),
-    else:
-        if verbose: 
-            if newline:
-                print(_string,'\n')
-            else: print(_string)
-
-
 class GenFuncCell(RNNCell):
     def __init__(self, 
                  harbor,
