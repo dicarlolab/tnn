@@ -18,22 +18,15 @@ from tensorflow.python.ops.rnn_cell import RNNCell
 
 # Import Unicycle-specific things
 from unicycle_settings import *
-from json_import import json_import
-from construct_networkx import construct_G
+from json_import import *
+from construct_networkx import *
 from node_sizing import *
-
-import utility_functions
-from utility_functions import fetch_node
-from harbor import Harbor, Harbor_Dummy, Policy
-from GenFuncCell import GenFuncCell
+from initialize_nodes import *
+from unroller import *
 import imgs
 
 # Import the system-related libs
-import argparse
-import os
-import sys
 from random import randint
-from itertools import chain
 if VERBOSE:
     from dbgr import dbgr_verbose as dbgr
 else:
@@ -44,7 +37,7 @@ class Unicycle(object):
     def __init__(self):
         print 'Unicycle Initialized'
 
-    def build(self):
+    def build(self, dbgr=dbgr):
         """
         The main execution routine file for the Universal Neural
         Interpretation and Cyclicity Engine (UNICYCLE)
@@ -179,64 +172,38 @@ class Unicycle(object):
                                 node_input_touch,
                                 node_touch)
 
+        # Emotional support
+        dbgr(imgs.centaur())
+
+        return G, H, repo
+
+    def __call__(self, input_sequence, G, repo, dbgr=dbgr):
         #                      STEP 7
         #      ######          ######          ######
         #       ####################################
         #      ######          ######          ######
 
-
         dbgr('======\nSTEP 7\n TF Unroller\n========================')
 
+        repo, last = unroller_call(input_sequence, G, repo)
 
-        # Now that the TF Nodes have been initialized, we build the Graph by
-        # calling each Node with the appropriate inputs from the other Nodes:
-        for node in node_touch:
-            tf_node=repo[node]
-            # Collect all the incoming inputs, including feedback:
-            incoming_inputs_forward=H.predecessors(node)
-            incoming_inputs_feedback=[i for i in G.predecessors(node) \
-                                        if i not in incoming_inputs_forward]
+        return repo[last]
 
-            current_info=fetch_node(node)[0]
+    def alexnet_demo_out(self, training_input=[], **kwargs):
+        G, H, repo = self.build()
+        last_ = self(training_input, G, repo)
+        return last_
 
-            # Assemble the correct inputs:
-            # Inputs are {'nickname':Tensor}
-            # First the forward inputs:
-            inputs={i:repo[i].state for i in incoming_inputs_forward}
-            # Then the backwards inputs:
-            for i in incoming_inputs_feedback:
-                inputs[i]=repo[i].state
-
-            # Call the node with the correct inputs
-            tf_node(inputs)
-
-        # Emotional support
-        dbgr(imgs.centaur())
-
-        return repo[node_touch[-1]]
-
-
-    def alexnet_demo_out(self, training_input=None, **kwargs):
-        pass
-
-
-
-#### Unroller should be almost entirely generic
-#### Separate function!
-## Unicycle 
-
-
-    def unicycle_tfutils(self,training_data,**kwargs):
-        m=self.alexnet_demo_out(training_data,**kwargs)
+    def unicycle_tfutils(self, training_data, **kwargs):
+        m = self.alexnet_demo_out(training_data, **kwargs)
         return m.state, {'input': 'image_input_1',
-                       'type': 'lrnorm',
-                       'depth_radius': 4,
-                       'bias': 1,
-                       'alpha': 0.0001111,
-                       'beta': 0.00001111}
+                         'type': 'lrnorm',
+                         'depth_radius': 4,
+                         'bias': 1,
+                         'alpha': 0.0001111,
+                         'beta': 0.00001111}
 
-if __name__=='__main__':
+if __name__ == '__main__':
     print 'THIS\nIS\nA\nTEST\nUNICYCLE\nALEXNET\nINITIALIZATION'
-    a=Unicycle()
-    a.build()
-    b=a.alexnet_demo_out()
+    a = Unicycle()
+    b = a.alexnet_demo_out()

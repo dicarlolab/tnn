@@ -2,6 +2,7 @@ from dbgr import dbgr_silent
 from unicycle_settings import *
 from utility_functions import fetch_node
 from harbor import Harbor, Harbor_Dummy, Policy
+from itertools import chain
 
 
 def all_node_sizes(G, H, nodes, dbgr=dbgr_silent):

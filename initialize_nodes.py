@@ -1,4 +1,5 @@
 import utility_functions
+from GenFuncCell import GenFuncCell
 
 
 def initialize_nodes(nodes,
