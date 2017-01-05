@@ -20,6 +20,7 @@ from tensorflow.python.ops.rnn_cell import RNNCell
 from unicycle_settings import *
 from json_import import json_import
 from construct_networkx import construct_G
+from node_sizing import *
 
 import utility_functions
 from utility_functions import fetch_node
@@ -160,6 +161,10 @@ class Unicycle(object):
 
         dbgr('======\nSTEP 5\n Input Size Calculation\n======')
 
+        # Calculate the sizes of all of the nodes here
+        node_out_size, node_state_size, node_harbors, node_input_touch, \
+            node_touch = all_node_sizes(G, H, nodes, dbgr=dbgr)
+
         #                      STEP 6
         #      ######          ######          ######
         #       ####################################
@@ -167,61 +172,20 @@ class Unicycle(object):
 
         dbgr('======\nSTEP 6\n TF Node Creation\n========================')
 
-        # with tf.Graph().as_default():
-        #     # with tf.Graph().device(device_for_node):
-        #     sess = tf.Session()
-        #     with sess.as_default():
+        # Initialize all the nodes:
+        repo = initialize_nodes(nodes,
+                                node_out_size,
+                                node_state_size,
+                                node_input_touch,
+                                node_touch)
 
-        #         # Initialize the first TF Placeholder to be pushed through
-        #         # the Graph
-        #         first_cell=GenFuncCell(harbor=node_harbors[first],
-        #                                state_fs=[],
-        #                                out_fs=[],
-        #                                state_fs_kwargs=[],
-        #                                out_fs_kwargs=[],
-        #                                memory_kwargs={},
-        #                                output_size=node_out_size[first],
-        #                                state_size=node_state_size[first],
-        #                                scope=first)
+        #                      STEP 7
+        #      ######          ######          ######
+        #       ####################################
+        #      ######          ######          ######
 
-        # Repository of all the Tensor outputs for each Node in the TF Graph
-        repo={}
 
-        for i in node_input_touch:
-            current_info=fetch_node(node)[0]
-
-            #Initialize the TF Placeholder for this input
-            this_input=GenFuncCell(harbor=node_harbors[i],
-                                   state_fs=[], 
-                                   out_fs=[], 
-                                   state_fs_kwargs=[],
-                                   out_fs_kwargs=[],
-                                   memory_kwargs={},
-                                   output_size=node_out_size[i], 
-                                   state_size=node_state_size[i], 
-                                   scope=i)
-
-            repo[i]=this_input
-
-        # Now, let's initialize all the nodes one-by-one
-        for node in node_touch:
-            current_info=fetch_node(node)[0]
-
-            # Let's initiate TF Node:
-            tf_node=GenFuncCell(harbor=node_harbors[node],
-                               state_fs=\
-                        [str(f['type']) for f in current_info['functions']], 
-                               out_fs=[], 
-                               state_fs_kwargs=\
-        utility_functions.assemble_function_kwargs(current_info['functions'],
-                                            node_harbors[node].desired_size,
-                                            node),
-                               out_fs_kwargs=[],
-                               memory_kwargs={},
-                               output_size=node_out_size[node], 
-                               state_size=node_state_size[node], 
-                               scope=str(node))
-            repo[node]=tf_node
+        dbgr('======\nSTEP 7\n TF Unroller\n========================')
 
 
         # Now that the TF Nodes have been initialized, we build the Graph by
