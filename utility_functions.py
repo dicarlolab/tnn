@@ -169,7 +169,7 @@ def chain_size_crunch(input_size, funcs):
 
 
 # Helper function to help with fetching node data from the big dump
-def fetch_node(nickname='no_nickname_given', node_storage=nodes, **kwargs):
+def fetch_node(nickname='no_nickname_given', node_storage=[], **kwargs):
     if len(kwargs) > 0:
         dict_to_iterate = kwargs
     else:

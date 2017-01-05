@@ -5,6 +5,7 @@ from GenFuncCell import GenFuncCell
 def initialize_nodes(nodes,
                      node_out_size,
                      node_state_size,
+                     node_harbors,
                      node_input_touch,
                      node_touch,
                      fetch_func=utility_functions.fetch_node):
@@ -12,7 +13,7 @@ def initialize_nodes(nodes,
     repo = {}
 
     for i in node_input_touch:
-        current_info = fetch_func(node, node_storage=nodes)[0]
+        current_info = fetch_func(i, node_storage=nodes)[0]
 
         # Initialize the TF Placeholder for this input
         this_input = GenFuncCell(harbor=node_harbors[i],

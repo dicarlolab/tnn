@@ -169,6 +169,7 @@ class Unicycle(object):
         repo = initialize_nodes(nodes,
                                 node_out_size,
                                 node_state_size,
+                                node_harbors,
                                 node_input_touch,
                                 node_touch)
 
@@ -177,7 +178,7 @@ class Unicycle(object):
 
         return G, H, repo
 
-    def __call__(self, input_sequence, G, repo, dbgr=dbgr):
+    def __call__(self, input_sequence, G, repo, last=None, dbgr=dbgr):
         #                      STEP 7
         #      ######          ######          ######
         #       ####################################
@@ -185,7 +186,7 @@ class Unicycle(object):
 
         dbgr('======\nSTEP 7\n TF Unroller\n========================')
 
-        repo, last = unroller_call(input_sequence, G, repo)
+        repo, last = unroller_call(input_sequence, G, repo, last)
 
         return repo[last]
 

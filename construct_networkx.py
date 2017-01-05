@@ -29,6 +29,7 @@ import os
 import json
 from unicycle_settings import *
 from dbgr import dbgr_silent
+from itertools import chain
 
 # Import Network-X support libraries
 import networkx as nx

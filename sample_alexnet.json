@@ -8,14 +8,6 @@
                   ],
       "type":"placeholder" 
     }, 
-    { "nickname":"image_input_2", 
-      "batch_size":256,
-      "functions":[{ "type":"placeholder",
-                     "output_size":[224,224,3]
-                   }
-                  ],
-      "type":"placeholder" 
-    }, 
     { "nickname":"conv_1",  
       "functions":[{ "type":"conv", 
                      "filter_size":[11,11],

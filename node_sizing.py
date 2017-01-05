@@ -1,8 +1,10 @@
 from dbgr import dbgr_silent
 from unicycle_settings import *
 from utility_functions import fetch_node
+import utility_functions
 from harbor import Harbor, Harbor_Dummy, Policy
 from itertools import chain
+import networkx as nx
 
 
 def all_node_sizes(G, H, nodes, dbgr=dbgr_silent):
@@ -16,6 +18,7 @@ def all_node_sizes(G, H, nodes, dbgr=dbgr_silent):
                            nodes=nodes,
                            node_out_size=node_out,
                            node_state_size=node_state,
+                           node_harbors=node_harbors,
                            node_touch=node_touch,
                            dbgr=dbgr)
 
@@ -33,6 +36,10 @@ def init_root_node_size_and_harbor(nodes,
     # We assume that input image size has been specified
     input_nodes = fetch_func(type='bias' if bias else 'placeholder',
                              node_storage=nodes)
+
+    if len(input_nodes) == 0:
+        return node_out_size, node_state_size, node_harbors, node_touch_list
+
     if not bias:
         # Make sure all the batch sizes are the same:
         assert len(set([i['batch_size'] for i in input_nodes])) == 1, \
@@ -125,6 +132,7 @@ def all_node_size_find(G,
                        nodes,
                        node_out_size,
                        node_state_size,
+                       node_harbors,
                        node_touch,
                        root_nodes=None,
                        fetch_func=fetch_node,
