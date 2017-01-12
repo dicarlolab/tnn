@@ -59,20 +59,10 @@ class Unicycle(object):
          use this nickname to look up relevant node's metadata in the node
          dictionary list we acquired in step 1.
 
-         Step 3
-        =======
-         BFS Search - currently unused, might slash this section soon.
+         Using the Network-X graph G we find all edges that are feedback and
+         mark them as such with a 'feedback' attribute
 
-        Step 4
-        =======
-         Using the Network-X graph G we create a parallel graph H and copy the
-         main forward links into it.
-
-            if target_node not on any path leading to source node:
-                append (source_node, target_node) to forward_list
-            NXGRAPH using forward_list -> H
-
-        Step 5
+        Step 3
         =======
          Once all the connections are made, we start the size calculation.
          This involves the Harbor of every one of the nodes (here the actual
@@ -127,36 +117,19 @@ class Unicycle(object):
         dbgr('======\nSTEP 2\n Network-X Raw Build\n======')
 
         # Create NetworkX DiGraph G, find root nodes
-        G, root_nodes = construct_G(links, dbgr=dbgr)
+        G = construct_G(nodes=nodes, links=links, dbgr=dbgr)
 
         #                      STEP 3
         #      ######          ######          ######
         #       ####################################
         #      ######          ######          ######
 
-        dbgr('======\nSTEP 3\n BFS Dependency Parse\n======')
-        dbgr('BFS Dependency Parse Temporarily Disabled')
-
-        #                      STEP 4
-        #      ######          ######          ######
-        #       ####################################
-        #      ######          ######          ######
-
-        dbgr('======\nSTEP 4\n Clone Forward-Only Graph Creation\n======')
-
-        # Create the forward-only DiGraph H
-        H = construct_H(G, dbgr=dbgr)
-
-        #                      STEP 5
-        #      ######          ######          ######
-        #       ####################################
-        #      ######          ######          ######
-
-        dbgr('======\nSTEP 5\n Input Size Calculation\n======')
+        dbgr('======\nSTEP 3\n Input Size Calculation\n======')
 
         # Calculate the sizes of all of the nodes here
-        node_out_size, node_state_size, node_harbors, node_input_touch, \
-            node_touch = all_node_sizes(G, H, nodes, dbgr=dbgr)
+        # node_out_size, node_state_size, node_harbors, node_input_touch, \
+        #     node_touch = all_node_sizes(G, H, nodes, dbgr=dbgr)
+        G = all_node_sizes(G, dbgr=dbgr)
 
         #                      STEP 6
         #      ######          ######          ######

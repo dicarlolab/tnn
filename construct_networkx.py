@@ -36,12 +36,27 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
-def construct_G(links, draw=False, dbgr=dbgr_silent):
+def construct_G(nodes, links, draw=False, dbgr=dbgr_silent):
     dbgr('Building Network-X Raw DiGraph...')
     # We create a Network-X DiGraph G and populate it using the links.
+    #
+    # construct_G function returns a Graph that has both forward and backward
+    # edges. In this step, we also add an attribute 'feedback' to all edges to
+    # prepare a place for specifying that a particular edge is feedback later
+    # in the code (we will iterate through the edges and mark edges that are)
+    # feedback with a True value for 'feedback' attribute.
     G = nx.DiGraph()
-    G.add_edges_from(links)
-    # G.add_edge('fc_8','conv_3')
+    G.add_edges_from(links, feedback=False)
+
+    # Fill in the node information as attributes for every node:
+    for G_node in G.nodes():
+        for J_node in nodes:
+            if J_node['nickname'] == G_node:
+                for att in J_node:
+                    G.node[G_node][att] = J_node[att]
+                break
+            else:
+                continue
 
     dbgr('Network-X Raw Graph created! Nodes: ', newline=False)
     dbgr('    ' + '\n    '.join(sorted(G.nodes())))
@@ -67,34 +82,22 @@ def construct_G(links, draw=False, dbgr=dbgr_silent):
         plt.show()
         dbgr()
 
-    return G, root_nodes
-
-
-def construct_H(G, root_nodes=None, dbgr=dbgr_silent):
     dbgr('Finding all non-ancestral dependeny links in the Graph...', 1)
 
-    # If root_nodes is not supplied, we calculate it from G (again):
-    if not root_nodes:
-        root_nodes = [i for i in G.nodes() if len(G.predecessors(i)) == 0]
+    for (fr, to) in G.edges():
+        # For every edge in the graph G, we iterate through all the paths
+        # that lead to TARGET from SOURCE and see if the edge is a feedback
+        # link
+        if any([to in i for i in
+                list(chain(*[nx.all_simple_paths(G, first, fr)
+                             for first in root_nodes]))
+                ]):
+            # If it is a feedback edge, we change its 'feedback' attribute
+            # from False to True
+            G.edge[fr][to]['feedback'] = True
 
-    # Gotta love string comprehensions :)
-    # Add only those edges that lead forward (the target is not an ancestor)
-    forward = [(fr, to) for (fr, to) in G.edges()
-               if not any([to in i for i in \
-                           # All paths lead to Rome! (from all roots to `to`)
-                           list(chain(*[nx.all_simple_paths(G, first, fr) \
-                                for first in root_nodes]))
-                           ])
-               ]
-
-    # Let's create a forward-only copy of G --> H
-    H = nx.DiGraph(forward)
+    # Now the Graph G has edges that are properly labelled as feedback or not
 
     dbgr('done!')
-    dbgr('Links: ', newline=False)
-    dbgr('    ' + '\n    '.join([str(i) for i in forward]))
 
-    dbgr('Nodes of forward-only Graph: ', newline=False)
-    dbgr('    ' + '\n    '.join(sorted(H.nodes())))
-
-    return H
+    return G

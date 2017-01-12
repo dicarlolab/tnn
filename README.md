@@ -78,20 +78,23 @@ TO-DO
 
 Things to do by next iteration of Unicycle:
 
-- Merge resize_shape_to function into Harbor class as a method, do all the input shape calculations inside of Harbor
+- Pass around NetworkX instead of lists
+	- Merge H into G
+	- Merge nodes into NX
+	- Merge node_out_size into NX
+	- Merge node_state_size into NX
+	- Merge node_harbors into NX
+	- Merge node_input_touch into NX
+	- Merge node_touch into NX
+	- Copy for H
 
-- Fix Unrolling time dependence on previous state (t-1 fix)
+- Modify GenFuncCell to have methods to memoize outputs and states. Look into pruning.
 
-- Use tf-utils for training
+- Look into Harbor generalization, merge Harbor_Dummy into Harbor
 
-- Support for many Placeholders and Nodes with no predecessors - run down the graph from all of these nodes and merge together.
+- flake8 things
 
-- Class-ify Unicycle, add call method
+- Add tests!
 
-- Longest path Harbor Policy as default policy
-
-- Think about Harbor Master Policy as a function that takes a list of paths and/or an arbitrary set of inputs depending on what the function is.
-
-
-To be updated soon ...
+- Do training ooooh yeah - timing test and regression test. Benchmarks
 
