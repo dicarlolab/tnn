@@ -78,21 +78,21 @@ TO-DO
 
 Things to do by next iteration of Unicycle:
 
-- Pass around NetworkX instead of lists
+v Pass around NetworkX instead of lists
 	v Merge H into G
 	v Merge nodes into NX
-	- Merge node_out_size into NX
-	- Merge node_state_size into NX
-	- Merge node_harbors into NX
-	- Merge node_input_touch into NX
-	- Merge node_touch into NX
-	- Copy for H
+	v Merge node_out_size into NX
+	v Merge node_state_size into NX
+	v Merge node_harbors into NX
+	v Merge node_input_touch into NX
+	v Merge node_touch into NX
+	v Copy for H
 
-- Modify GenFuncCell to have methods to memoize outputs and states. Look into pruning.
+v Modify GenFuncCell to have methods to memoize outputs and states. Look into pruning.
 
 - Look into Harbor generalization, merge Harbor_Dummy into Harbor
 
-- flake8 things
+v flake8 things
 
 - Add tests!
 

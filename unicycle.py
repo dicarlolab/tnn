@@ -174,4 +174,4 @@ class Unicycle(object):
 if __name__ == '__main__':
     print 'THIS\nIS\nA\nTEST\nUNICYCLE\nALEXNET\nINITIALIZATION'
     a = Unicycle()
-    b = a.alexnet_demo_out()
+    b = a.alexnet_demo_out(['', '', '', '', '', '', '', '', '', ''])

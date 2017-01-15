@@ -15,13 +15,11 @@ def unroller_call(input_sequence, G, last=None):
         for node in G.nodes():
             # Gather inputs
             parents = G.predecessors(node)
-            inputs = {p: G.node[p]['tf_cell'].previous() for p in parents}
+            inputs = {p: G.node[p]['tf_cell'].get_output() for p in parents}
             # Compute output and state
-            out, state = G.node[node]['tf_cell'](
-                inputs,
-                G.node[node]['tf_cell'].get_state())
+            out, state = G.node[node]['tf_cell'](inputs)
 
-            G.node[node]['tf_cell'].memoize(out)
+            G.node[node]['tf_cell'].update_outputs(out)
             G.node[node]['tf_cell'].update_state(state)
 
     last = G.node[
