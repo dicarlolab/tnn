@@ -24,10 +24,6 @@ construct_H(G, root_nodes=None, dbgr=dbgr_silent)
 """
 
 # System things
-import sys
-import os
-import json
-from unicycle_settings import *
 from dbgr import dbgr_silent
 from itertools import chain
 
@@ -97,6 +93,10 @@ def construct_G(nodes, links, draw=False, dbgr=dbgr_silent):
             G.edge[fr][to]['feedback'] = True
 
     # Now the Graph G has edges that are properly labelled as feedback or not
+    # Mark the output nodes:
+    for node in G.nodes():
+        if len(G.neighbors(node)) == 0:
+            G.node[node]['output_layer'] = True
 
     dbgr('done!')
 

@@ -1,54 +1,45 @@
-import utility_functions
+from utility_functions import fetch_node, assemble_function_kwargs
 from GenFuncCell import GenFuncCell
 
 
-def initialize_nodes(nodes,
-                     node_out_size,
-                     node_state_size,
-                     node_harbors,
-                     node_input_touch,
-                     node_touch,
-                     fetch_func=utility_functions.fetch_node):
-    # Repository of all the Tensor outputs for each Node in the TF Graph
-    repo = {}
+def initialize_nodes(G, fetch_func=fetch_node):
 
-    for i in node_input_touch:
-        current_info = fetch_func(i, node_storage=nodes)[0]
+    for i in G.graph['input_touch_order']:
+        current_info = fetch_func(i, graph=G)[0]
 
         # Initialize the TF Placeholder for this input
-        this_input = GenFuncCell(harbor=node_harbors[i],
+        this_input = GenFuncCell(harbor=G.node[i]['harbor'],
                                  state_fs=[],
                                  out_fs=[],
                                  state_fs_kwargs=[],
                                  out_fs_kwargs=[],
                                  memory_kwargs={},
-                                 output_size=node_out_size[i],
-                                 state_size=node_state_size[i],
+                                 output_size=G.node[i]['output_size'],
+                                 state_size=G.node[i]['state_size'],
                                  scope=str(i))
 
-        repo[i] = this_input
+        G.node[i]['tf_cell'] = this_input
 
     # Now, let's initialize all the nodes one-by-one
-    for node in node_touch:
-        current_info = fetch_func(node, node_storage=nodes)[0]
+    for node in G.graph['touch_order']:
+        current_info = fetch_func(node, graph=G)[0]
 
-        sfk = utility_functions.assemble_function_kwargs(
-            current_info['functions'],
-            node_harbors[node].desired_size,
-            node)
+        sfk = assemble_function_kwargs(current_info['functions'],
+                                       G.node[node]['harbor'].desired_size,
+                                       node)
 
         # Let's initiate TF Node:
-        tf_node = GenFuncCell(harbor=node_harbors[node],
+        tf_node = GenFuncCell(harbor=G.node[node]['harbor'],
                               state_fs=[str(f['type'])
                                         for f in current_info['functions']],
                               out_fs=[],
                               state_fs_kwargs=sfk,
                               out_fs_kwargs=[],
                               memory_kwargs={},
-                              output_size=node_out_size[node],
-                              state_size=node_state_size[node],
+                              output_size=G.node[node]['output_size'],
+                              state_size=G.node[node]['state_size'],
                               scope=str(node))
 
-        repo[node] = tf_node
+        G.node[node]['tf_cell'] = tf_node
 
-    return repo
+    return G

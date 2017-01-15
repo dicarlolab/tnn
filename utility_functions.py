@@ -3,6 +3,7 @@ Unicycle Utility Functions
 """
 
 from math import floor, ceil
+from random import randint
 import tensorflow as tf
 
 
@@ -13,12 +14,13 @@ def create_kwargs_conv(fn, input_size, name):
     assert 'type' in fn, 'Type of function not in function!'
     assert fn['type'] == 'conv', 'Type has to be CONV, but is %s' % \
         (fn['type'])
-    filter_tensor = tf.get_variable('filter_tensor_%s' % (name),
-                                    fn['filter_size']
-                                    + [input_size[-1]]
-                                    + [fn['num_filters']],
-                            initializer=tf.random_uniform_initializer(0, 1)
-                                    )
+    filter_tensor = \
+        tf.get_variable('filter_tensor_%s' % (name),
+                        fn['filter_size']
+                        + [input_size[-1]]
+                        + [fn['num_filters']],
+                        initializer=tf.random_uniform_initializer(0, 1)
+                        )
     out_dict['filter'] = filter_tensor
     out_dict['strides'] = [1, fn['stride'], fn['stride'], 1]
     out_dict['padding'] = fn['padding'].upper()
@@ -169,7 +171,9 @@ def chain_size_crunch(input_size, funcs):
 
 
 # Helper function to help with fetching node data from the big dump
-def fetch_node(nickname='no_nickname_given', node_storage=[], **kwargs):
+def fetch_node(nickname='no_nickname_given', graph=None, **kwargs):
+    if graph is None:
+        raise Exception('No node storage provided for fetch function!')
     if len(kwargs) > 0:
         dict_to_iterate = kwargs
     else:
@@ -177,9 +181,12 @@ def fetch_node(nickname='no_nickname_given', node_storage=[], **kwargs):
 
     matching = []
     for k, v in dict_to_iterate.items():
-        contains_this_val = [i for i in [ii for ii in node_storage if k in ii]
-                             if i[k] == v]
-        matching = matching + [i for i in contains_this_val
-                               if i not in matching]
+        contains_this_val = [graph.node[i] for i in
+                             [ii for ii in graph.nodes()
+                              if k in graph.node[ii]]
+                             if graph.node[i][k] == v
+                             and graph.node[i] not in matching]
+        matching += [i for i in contains_this_val
+                     if i not in matching]
 
     return matching

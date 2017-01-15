@@ -11,22 +11,17 @@ Unicycle Class
 # Import all the future support libs
 from __future__ import absolute_import, division
 
-# Import TF and numpy - basic stuff
-import tensorflow as tf
-import numpy as np
-from tensorflow.python.ops.rnn_cell import RNNCell
-
 # Import Unicycle-specific things
-from unicycle_settings import *
-from json_import import *
-from construct_networkx import *
-from node_sizing import *
-from initialize_nodes import *
-from unroller import *
+from unicycle_settings import VERBOSE
+from json_import import json_import
+from construct_networkx import construct_G
+from node_sizing import all_node_sizes
+from initialize_nodes import initialize_nodes
+from unroller import unroller_call
+from utility_functions import fetch_node
 import imgs
 
 # Import the system-related libs
-from random import randint
 if VERBOSE:
     from dbgr import dbgr_verbose as dbgr
 else:
@@ -131,27 +126,22 @@ class Unicycle(object):
         #     node_touch = all_node_sizes(G, H, nodes, dbgr=dbgr)
         G = all_node_sizes(G, dbgr=dbgr)
 
-        #                      STEP 6
+        #                      STEP 4
         #      ######          ######          ######
         #       ####################################
         #      ######          ######          ######
 
-        dbgr('======\nSTEP 6\n TF Node Creation\n========================')
+        dbgr('======\nSTEP 4\n TF Node Creation\n========================')
 
         # Initialize all the nodes:
-        repo = initialize_nodes(nodes,
-                                node_out_size,
-                                node_state_size,
-                                node_harbors,
-                                node_input_touch,
-                                node_touch)
+        G = initialize_nodes(G)
 
         # Emotional support
         dbgr(imgs.centaur())
 
-        return G, H, repo
+        return G
 
-    def __call__(self, input_sequence, G, repo, last=None, dbgr=dbgr):
+    def __call__(self, input_sequence, G, dbgr=dbgr):
         #                      STEP 7
         #      ######          ######          ######
         #       ####################################
@@ -159,13 +149,16 @@ class Unicycle(object):
 
         dbgr('======\nSTEP 7\n TF Unroller\n========================')
 
-        repo, last = unroller_call(input_sequence, G, repo, last)
+        G, last = unroller_call(
+            input_sequence,
+            G,
+            fetch_node(output_layer=True, graph=G)[0]['tf_cell'])
 
-        return repo[last]
+        return last
 
     def alexnet_demo_out(self, training_input=[], **kwargs):
-        G, H, repo = self.build()
-        last_ = self(training_input, G, repo)
+        G = self.build()
+        last_ = self(training_input, G)
         return last_
 
     def unicycle_tfutils(self, training_data, **kwargs):
@@ -176,6 +169,7 @@ class Unicycle(object):
                          'bias': 1,
                          'alpha': 0.0001111,
                          'beta': 0.00001111}
+
 
 if __name__ == '__main__':
     print 'THIS\nIS\nA\nTEST\nUNICYCLE\nALEXNET\nINITIALIZATION'

@@ -1,8 +1,6 @@
 """
 Harbor Class Definition
 """
-
-from unicycle_settings import *
 import tensorflow as tf
 
 
@@ -27,8 +25,8 @@ class Harbor(object):
         big_input_list = []
         print 'Inputs:', inputs
         for incoming_input in inputs:
-            print 'Harbor call of cell %s for resizing node %s' % (self.name,
-                                                              incoming_input)
+            print 'Harbor call of cell %s for resizing node %s' % \
+                (self.name, incoming_input)
             input_val = inputs[incoming_input]
             input_shape = input_val.get_shape().as_list()
 
@@ -101,23 +99,22 @@ class Policy(object):
 
     def reshape_size_for_long(self, incoming_sizes):
         # Find the max shape size in all the inputs:
-        long_shape = max(incoming_sizes.items(), key=lambda x: max(len(t)
-                                                        for t in x[1]))[1][0]
+        long_shape = max(incoming_sizes.items(),
+                         key=lambda x: max(len(t) for t in x[1]))[1][0]
         return long_shape
 
     def reshape_size_for_short(self, incoming_sizes):
         # Find the max shape size in all the inputs:
-        short_shape=min(incoming_sizes.items(), key=lambda x: min(len(t) \
-                                                        for t in x[1]))[1][0]
+        short_shape = min(incoming_sizes.items(),
+                          key=lambda x: min(len(t) for t in x[1]))[1][0]
         return short_shape
 
-    def reshape_size_for_min(self,incoming_sizes):
+    def reshape_size_for_min(self, incoming_sizes):
         # Find the max shape size in all the inputs:
-        min_shape=min(incoming_sizes.items(), key=lambda x: \
-                                    reduce(lambda p,q: p*q, x[1][0]))[1][0]
+        min_shape = min(incoming_sizes.items(),
+                        key=lambda x: reduce(lambda p,
+                                             q: p * q, x[1][0]))[1][0]
         return min_shape
-
-
 
     def tf_node_long(self,
                      incoming_input,
@@ -126,54 +123,58 @@ class Policy(object):
                      desired_size,
                      name=''):
 
-        def is_bigger(shape1,shape2):
+        def is_bigger(shape1, shape2):
             # Return True if shape1 has more neurons than shape2, False o/w
-            if reduce(lambda x,y: x*y,shape1)>reduce(lambda x,y: x*y,shape2):
+            if reduce(lambda x, y: x * y, shape1) > reduce(lambda x, y: x * y,
+                                                           shape2):
                 return True
             else:
                 return False
 
         # If the number of dimensions in the input_shape is like an image:
-        if len(input_shape)>2:
-            # Final size of pooling is f = (i-k)/s + 1, 
+        if len(input_shape) > 2:
+            # Final size of pooling is f = (i-k)/s + 1,
             # where i is the input size, k is the window size, and s is the
             # stride
-            height_s=input_shape[1] // desired_size[1]
-            width_s=input_shape[2] // desired_size[2]
-            strides = [1,height_s,width_s,1]
+            height_s = input_shape[1] // desired_size[1]
+            width_s = input_shape[2] // desired_size[2]
+            strides = [1, height_s, width_s, 1]
 
-            height_k=input_shape[1]-height_s*(desired_size[1]-1)
-            width_k=input_shape[2]-width_s*(desired_size[2]-1)
-            ksize=[1,height_k,width_k,1]
+            height_k = input_shape[1] - height_s * (desired_size[1] - 1)
+            width_k = input_shape[2] - width_s * (desired_size[2] - 1)
+            ksize = [1, height_k, width_k, 1]
 
             # Do the resizing here
-            if self.shape_select=='max':
+            if self.shape_select == 'max':
                 pool = tf.nn.max_pool(input_val,
-                          ksize=ksize,
-                          strides=strides,
-                          padding='VALID',
-                          name=name+'_'+incoming_input+'_harbor_maxpool')
-            elif self.shape_select=='avg':
+                                      ksize=ksize,
+                                      strides=strides,
+                                      padding='VALID',
+                                      name=name
+                                      + '_' + incoming_input
+                                      + '_harbor_maxpool')
+            elif self.shape_select == 'avg':
                 pool = tf.nn.avg_pool(input_val,
-                          ksize=ksize,
-                          strides=strides,
-                          padding='VALID',
-                          name=name+'_'+incoming_input+'_harbor_avgpool')
-            elif self.shape_select=='up':
+                                      ksize=ksize,
+                                      strides=strides,
+                                      padding='VALID',
+                                      name=name
+                                      + '_' + incoming_input
+                                      + '_harbor_avgpool')
+            elif self.shape_select == 'up':
                 # Not sure if tf.image.resize_images is trainable...
                 pool = tf.image.resize_images(input_val, desired_size[1:3])
             else:
-                pool= input_val
+                pool = input_val
 
-            print '  >> Harbor of %s - resizing %s, want %s and got %s'%\
-                                            (name,
-                                             incoming_input,
-                                             desired_size,
-                                             pool.get_shape().as_list())
+            print '  >> Harbor of %s - resizing %s, want %s and got %s' % \
+                (name,
+                 incoming_input,
+                 desired_size,
+                 pool.get_shape().as_list())
             # Now append to a list of all the inputs
             return pool
 
         # If the number of dimensions is 2:
         else:
             return input_val
-

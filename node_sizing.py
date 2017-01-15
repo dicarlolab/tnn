@@ -1,5 +1,5 @@
 from dbgr import dbgr_silent
-from unicycle_settings import *
+from unicycle_settings import BATCH_SIZE
 from utility_functions import fetch_node
 import utility_functions
 from harbor import Harbor, Harbor_Dummy, Policy
@@ -7,44 +7,24 @@ from itertools import chain
 import networkx as nx
 
 
-def all_node_sizes(G, H, nodes, dbgr=dbgr_silent):
+def all_node_sizes(G, dbgr=dbgr_silent):
 
-    node_out, node_state, node_harbors, node_input_touch, node_touch = \
-        root_node_size_find(H=H, nodes=nodes, dbgr=dbgr)
+    G = root_node_size_find(G, dbgr=dbgr)
 
-    node_out, node_state, node_harbors, node_touch = \
-        all_node_size_find(G=G,
-                           H=H,
-                           nodes=nodes,
-                           node_out_size=node_out,
-                           node_state_size=node_state,
-                           node_harbors=node_harbors,
-                           node_touch=node_touch,
-                           dbgr=dbgr)
+    G = all_node_size_find(G, dbgr=dbgr)
 
-    return node_out, node_state, node_harbors, node_input_touch, node_touch
+    return G
 
 
-def init_root_node_size_and_harbor(nodes,
-                                   node_out_size,
-                                   node_state_size,
-                                   node_harbors,
-                                   node_touch_list,
+def init_root_node_size_and_harbor(G,
                                    bias=False,
                                    fetch_func=fetch_node):
 
-    # We assume that input image size has been specified
-    input_nodes = fetch_func(type='bias' if bias else 'placeholder',
-                             node_storage=nodes)
+    # Find the input nodes, list of dicts of G attributes
+    input_nodes = fetch_func(type='bias' if bias else 'placeholder', graph=G)
 
     if len(input_nodes) == 0:
-        return node_out_size, node_state_size, node_harbors, node_touch_list
-
-    if not bias:
-        # Make sure all the batch sizes are the same:
-        assert len(set([i['batch_size'] for i in input_nodes])) == 1, \
-            'Batches differ!'
-    BATCH_SIZE = input_nodes[0]['batch_size']
+        return G
 
     # Make sure the functions exist, and that the output sizes specified
     # Then, specify the node state and output sizes
@@ -57,83 +37,44 @@ def init_root_node_size_and_harbor(nodes,
         assert 'output_size' in i['functions'][0], 'Input node %s has no \
             output size specified!' % (this_name)
         # [batch, height, width, channels], batch is usually set to None
-        node_out_size[this_name] = [BATCH_SIZE] \
+        G.node[this_name]['output_size'] = [BATCH_SIZE] \
             + i['functions'][0]['output_size']
-        node_state_size[this_name] = node_out_size[this_name][:]
-        node_harbors[this_name] = Harbor_Dummy(node_out_size[this_name],
-                                               input_=not bias)
-        node_touch_list.append(this_name)
+        G.node[this_name]['state_size'] = G.node[this_name]['output_size'][:]
+        G.node[this_name]['harbor'] = Harbor_Dummy(
+            G.node[this_name]['output_size'],
+            input_=not bias)
+        G.graph['input_touch_order'].append(this_name)
 
-    return node_out_size, node_state_size, node_harbors, node_touch_list
+    return G
 
 
-def root_node_size_find(H,
-                        nodes,
-                        node_out_size=None,
-                        node_state_size=None,
-                        node_harbors=None,
-                        node_input_touch=None,
-                        node_touch=None,
-                        dbgr=dbgr_silent):
+def root_node_size_find(G, dbgr=dbgr_silent):
 
-    if not node_out_size:
-        node_out_size = {i: None for i in H.nodes()}
-    if not node_state_size:
-        node_state_size = {i: None for i in H.nodes()}
-
-    dbgr('Starting the node traversal for size calculation. If this step \
-        hangscheck the node_out_size validation loop in <Step 5>.')
-
-    # This is a hash table that looks at whether a particular node has been
-    # traversed or not (if it's size has been calculated)
-    if not node_harbors:
-        node_harbors = {}
+    dbgr('Starting the node traversal for size calculation.')
 
     # Store the correct initialization order for the nodes:
-    if not node_input_touch:
-        node_input_touch = []
-    if not node_touch:
-        node_touch = []
+    if 'input_touch_order' not in G.graph:
+        G.graph['input_touch_order'] = []
+    if 'touch_order' not in G.graph:
+        G.graph['touch_order'] = []
 
     # Initialize inputs
-    node_out_size, node_state_size, node_harbors, node_input_touch = \
-        init_root_node_size_and_harbor(nodes=nodes,
-                                       node_out_size=node_out_size,
-                                       node_state_size=node_state_size,
-                                       node_harbors=node_harbors,
-                                       node_touch_list=node_input_touch,
-                                       bias=False)
+    G = init_root_node_size_and_harbor(G, bias=False)
 
     # Initialize biases
-    node_out_size, node_state_size, node_harbors, node_touch = \
-        init_root_node_size_and_harbor(nodes=nodes,
-                                       node_out_size=node_out_size,
-                                       node_state_size=node_state_size,
-                                       node_harbors=node_harbors,
-                                       node_touch_list=node_touch,
-                                       bias=True)
+    G = init_root_node_size_and_harbor(G, bias=True)
 
     dbgr('Starting Node Output Sizes:', newline=False)
-    for i in sorted(node_out_size):
-        dbgr('   ' + i.ljust(max([len(j) for j in sorted(node_out_size)]))
-             + ':' + str(node_out_size[i]), newline=False)
+    for i in sorted(G.nodes()):
+        dbgr('   ' + i.ljust(max([len(j) for j in G.nodes()]))
+             + ':' + str(G.node[i]['output_size'] if 'output_size' in
+                         G.node[i] else []), newline=False)
     dbgr(newline=False)
 
-    return \
-        node_out_size, \
-        node_state_size, \
-        node_harbors, \
-        node_input_touch, \
-        node_touch
+    return G
 
 
 def all_node_size_find(G,
-                       H,
-                       nodes,
-                       node_out_size,
-                       node_state_size,
-                       node_harbors,
-                       node_touch,
                        root_nodes=None,
                        fetch_func=fetch_node,
                        dbgr=dbgr_silent):
@@ -141,40 +82,41 @@ def all_node_size_find(G,
     if not root_nodes:
         root_nodes = [i for i in G.nodes() if len(G.predecessors(i)) == 0]
 
-    while not all(node_out_size.values()):
-        for node in node_out_size:
-            if node_out_size[node]:
+    while not all(['output_size' in G.node[i] for i in G.nodes()]):
+        for node in G.nodes():
+            if 'output_size' in G.node[node]:
                 # Current node has been calculated already, skip!
                 continue
             else:
-                if all([node_out_size[i] for i in H.predecessors(node)]):
+                if all(['output_size' in G.node[i]
+                        for i in get_forward_pred(G, node)]):
                     dbgr('Counting up the sizes for node %s' % (node), 1)
                     # All the predecessors have been traversed, we can now
                     # proceed
 
                     # First, gather all the necessary info about the
                     # current node:
-                    current_info = fetch_func(node, node_storage=nodes)[0]
+                    current_info = fetch_func(node, graph=G)[0]
 
                     # Then, gather the sizes of all incoming nodes into a
-                    # dict: {'nickname':(size,all_simple_paths)}
+                    # dict: {'nickname': (size, all_simple_paths)}
                     incoming_sizes = {}
                     for pred in G.predecessors(node):
                         incoming_sizes[pred] = \
-                            (node_out_size[pred], list(
-                                chain(*[nx.all_simple_paths(H, st, pred)
+                            (G.node[pred]['output_size'], list(
+                                chain(*[nx.all_simple_paths(G, st, pred)
                                         for st in root_nodes])))
 
                     # Create a Policy instance
                     current_policy = Policy()
 
                     # Create a Harbor instance
-                    node_harbors[node] = Harbor(incoming_sizes,
-                                                policy=current_policy,
-                                                node_name=node)
+                    G.node[node]['harbor'] = Harbor(incoming_sizes,
+                                                    policy=current_policy,
+                                                    node_name=node)
 
                     # Extract the desired_size from Harbor:
-                    desired_size = node_harbors[node].get_desired_size()
+                    desired_size = G.node[node]['harbor'].get_desired_size()
 
                     # Find the size of the state:
                     current_state_size = \
@@ -185,12 +127,12 @@ def all_node_size_find(G,
                     current_out_size = current_state_size[:]
 
                     # Update node_out_size and node_state_size
-                    node_out_size[node] = current_out_size[:]
-                    node_state_size[node] = current_state_size[:]
+                    G.node[node]['output_size'] = current_out_size[:]
+                    G.node[node]['state_size'] = current_state_size[:]
 
                     # Add the current node to the node_touch list for further
                     # Tensor creation order
-                    node_touch.append(node)
+                    G.graph['touch_order'].append(node)
 
                     dbgr(' ... done!', newline=False)
 
@@ -202,11 +144,20 @@ def all_node_size_find(G,
 
     dbgr()
     dbgr('Final Node Output Sizes:', newline=False)
-    for i in sorted(node_out_size):
-        dbgr('   ' + i.ljust(max([len(j) for j in sorted(node_out_size)]))
-             + ':' + str(node_out_size[i]), newline=False)
+    for i in sorted(G.nodes()):
+        dbgr('   ' + i.ljust(max([len(j) for j in G.nodes()]))
+             + ':' + str(G.node[i]['output_size']), newline=False)
     dbgr(newline=False)
 
     dbgr('\nAll sizes calculated!')
 
-    return node_out_size, node_state_size, node_harbors, node_touch
+    return G
+
+
+def get_forward_pred(G, node):
+    # Get only those predecessors that are not feedback
+    # First gather a list of all predecessors
+    a = G.predecessors(node)
+    # Then filter out the nodes that are feedback
+    b = [i for i in a if not G.edge[i][node]['feedback']]
+    return b

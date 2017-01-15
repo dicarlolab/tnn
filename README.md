@@ -79,8 +79,8 @@ TO-DO
 Things to do by next iteration of Unicycle:
 
 - Pass around NetworkX instead of lists
-	- Merge H into G
-	- Merge nodes into NX
+	v Merge H into G
+	v Merge nodes into NX
 	- Merge node_out_size into NX
 	- Merge node_state_size into NX
 	- Merge node_harbors into NX
