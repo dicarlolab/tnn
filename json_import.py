@@ -10,30 +10,31 @@ Returns
  - Links    <List>  List of Tuples for every link in the Graph
 """
 
-import argparse
 import sys
 import os
 import json
-from unicycle_settings import *
 from dbgr import dbgr_silent
 
 
-def json_import(dbgr=dbgr_silent):
-    if len(sys.argv) < 2:
-        dbgr('No JSON settings file specified! Scanning current directory...')
-        for f in os.listdir('.'):
-            if f.endswith('.json'):
-                dbgr('Using first discovered JSON file in current path: %s'
-                     % (f.upper()))
-                json_file_name = f
-                break
+def json_import(filename=None, dbgr=dbgr_silent):
+    if not filename:
+        if len(sys.argv) < 2:
+            dbgr('No JSON settings file given! Scanning current directory...')
+            for f in os.listdir('.'):
+                if f.endswith('.json'):
+                    dbgr('Using first discovered JSON file in current path: %s'
+                         % (f.upper()))
+                    json_file_name = f
+                    break
+        else:
+            # Fetch the name of the JSON file from the command line args
+            json_file_name = sys.argv[1]
     else:
-        # Fetch the name of the JSON file from the command line args
-        json_file_name = sys.argv[1]
+        json_file_name = filename
 
     dbgr('Using JSON file %s for import...' % (json_file_name.upper()), 1)
 
-    with open('./'+json_file_name) as data_file:
+    with open('./' + json_file_name) as data_file:
         json_data = json.load(data_file)
 
     dbgr('done!')
