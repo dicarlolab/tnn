@@ -97,9 +97,9 @@ class GenFuncCell(RNNCell):
             self.output = input_
             return self.output, self.state
         print ('  >> GenFuncCell call of node %s - post-Harbor size %s' % (
-                                                self._scope,
-                                                prev.get_shape().as_list()),
-               )
+            self._scope,
+            prev.get_shape().as_list())
+        )
 
         # Each before-the-memory function, when run, will update the prev
         # value and pass that to the next function
@@ -114,20 +114,20 @@ class GenFuncCell(RNNCell):
             prev = cur_f(prev, **cur_f_args)
 
         print('  >> GenFuncCell of node %s - post-state size %s' % (
-                                                self._scope,
-                                                prev.get_shape().as_list()),
-              )
+            self._scope,
+            prev.get_shape().as_list())
+        )
         print('  >> GenFuncCell of node %s - pre-memory state size %s' % (
-                                    self._scope,
-                                    self.get_state().get_shape().as_list()),
-              )
+            self._scope,
+            self.get_state().get_shape().as_list())
+        )
         # Now, we update the memory!
         new_state = self.memory(in_layer=prev, **self._memory_kwargs)
 
         print('  >> GenFuncCell of node %s - post-memory state size %s' % (
-                                    self._scope,
-                                    new_state),
-              )
+            self._scope,
+            new_state)
+        )
 
         new_output = new_state
         # Each after-the-memory function, when run, will update the
@@ -143,9 +143,9 @@ class GenFuncCell(RNNCell):
             new_output = cur_f(new_output, **cur_f_args)
 
         print('  >> GenFuncCell of node %s - post-out-func size %s' % (
-                                    self._scope,
-                                    new_output)
-              )
+            self._scope,
+            new_output)
+        )
 
         return new_output, new_state
 
