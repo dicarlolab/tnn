@@ -10,27 +10,68 @@ class Harbor(object):
                  node_name='',
                  policy=None,
                  **policy_kwargs):
+        """
+        Harbor Class for accepting inputs into the GenFuncCell and resizing
+        them before the in-cell functions are executed
 
-        # Policy is an function-carrying object that performs some set of
+        Inputs:
+
+        - incoming_sizes:
+            The incoming sizes and paths of the inputs.
+            {'nickname': (size, all_simple_paths), ...}
+        - node_name:
+            Name of the GenFuncCell node that the Harbor belongs to
+        - policy (optional, default=None):
+            The Policy object with the parameter definition for this Harbor
+        - policy_kwargs (optional):
+            Keyworded arguments to be passed into a new Policy if none is
+            provided above
+        """
+
+        # ====== EITHER USE, OR CREATE AND USE POLICY: =======================
+
+        # Policy is a function-carrying object that performs some set of
         # actions on the input
-        self.policy = policy if policy else Policy()
+        self.policy = policy if policy else Policy(**policy_kwargs)
 
+        # ====== GET SETUP PARAMS FROM POLICY: ===============================
+
+        # This indicates which characteristic of the input to consider in
+        # picking the proper output size (size, length of path, etc)
         self.shape_select = self.policy.shape_select
+
+        # How to combine all the inputs at the end
         self.combination_type = self.policy.combination_type
-        self.name = node_name
 
         # Find the desired input size after Harbor processing
         self.desired_size = self.policy.final_output_size(incoming_sizes)
 
+        # ====== MISC: =======================================================
+
+        # Name of current cell (for scoping and logging mostly)
+        self.name = node_name
+
     def __call__(self, inputs):
-        # inputs is a dictionary of {'nickname':Tensor}
+        """
+        The __call__ function of the Harbor actually
+            1. Resizes all the incoming Tensors
+            2. Combines them
+            3. Returns the resulting Tensor
+
+        Inputs:
+
+        - inputs:
+            The incoming inputs into the Harbor (or technically into the
+            GenFuncCell that the Harbor belongs to)
+            {'nickname':Tensor, ...}
+        """
+
         big_input_list = []
         print 'Inputs:', inputs
         for (nickname, input_tensor) in inputs.items():
-            print 'Harbor call of cell %s for resizing node %s' % \
+            print 'Harbor call of cell %s for resizing output of node %s' % \
                 (self.name, nickname)
-            input_val = input_tensor
-            input_shape = input_val.get_shape().as_list()
+            input_shape = input_tensor.get_shape().as_list()
 
             print 'TF Size:', input_shape
 
@@ -39,7 +80,7 @@ class Harbor(object):
             # then added to big_input_list
             big_input_list.append(self.policy.tf_node_func(nickname,
                                                            input_shape,
-                                                           input_val,
+                                                           input_tensor,
                                                            self.desired_size))
 
         # Now we're working outside of the individual input resizing loop
@@ -89,7 +130,7 @@ class Policy(object):
         #   avg     -> average all the sizes (this is not yet implemented)
         self.shape_select = shape_select
 
-        # How to combine the inputs:
+        # How to combine the inputs (for Harbor use):
         #   concat  -> concatenate all inputs in depth
         #   sum     -> sum all the inputs (must be same size!)
         self.combination_type = combination_type
@@ -150,14 +191,6 @@ class Policy(object):
                      input_val,
                      desired_size,
                      name=''):
-
-        # def is_bigger(shape1, shape2):
-        #     # Return True if shape1 has more neurons than shape2, False o/w
-        #     if reduce(lambda x, y: x * y, shape1) \
-        #         > reduce(lambda x, y: x * y, shape2):
-        #         return True
-        #     else:
-        #         return False
 
         # If the number of dimensions in the input_shape is like an image:
         if len(input_shape) > 2:

@@ -105,7 +105,6 @@ class GenFuncCell(RNNCell):
 
     def __call__(self, input_):
         # Input is a dict {'nickname':Tensor}
-        print(input_)
         prev = self.harbor(input_)
         # This deals with input Harbors - janky!
         if isinstance(prev, type(tf.float32)):
