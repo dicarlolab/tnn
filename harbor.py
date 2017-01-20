@@ -11,23 +11,25 @@ class Harbor(object):
                  policy=None,
                  **policy_kwargs):
 
-        # Policy is a function that performs some set of actions on the input
+        # Policy is an function-carrying object that performs some set of
+        # actions on the input
         self.policy = policy if policy else Policy()
+
         self.shape_select = self.policy.shape_select
         self.combination_type = self.policy.combination_type
         self.name = node_name
 
         # Find the desired input size after Harbor processing
-        self.desired_size = self.policy.reshape_size_to(incoming_sizes)
+        self.desired_size = self.policy.final_output_size(incoming_sizes)
 
     def __call__(self, inputs):
         # inputs is a dictionary of {'nickname':Tensor}
         big_input_list = []
         print 'Inputs:', inputs
-        for incoming_input in inputs:
+        for (nickname, input_tensor) in inputs.items():
             print 'Harbor call of cell %s for resizing node %s' % \
-                (self.name, incoming_input)
-            input_val = inputs[incoming_input]
+                (self.name, nickname)
+            input_val = input_tensor
             input_shape = input_val.get_shape().as_list()
 
             print 'TF Size:', input_shape
@@ -35,7 +37,7 @@ class Harbor(object):
             # Function to create the TF node based on current input name,
             # shape, TF value and desired size - returns pool TF node that is
             # then added to big_input_list
-            big_input_list.append(self.policy.tf_node_func(incoming_input,
+            big_input_list.append(self.policy.tf_node_func(nickname,
                                                            input_shape,
                                                            input_val,
                                                            self.desired_size))
@@ -78,38 +80,64 @@ class Policy(object):
                  combination_type='concat',
                  size_to_resize_to_func=None,
                  tf_node_func=None):
+        # The characteristic of the shape to be selected and all input to
+        # be resized to:
+        #   long    -> longest path,
+        #   short   -> shortest path,
+        #   max     -> maximum size,
+        #   min     -> minimum size
+        #   avg     -> average all the sizes (this is not yet implemented)
         self.shape_select = shape_select
+
+        # How to combine the inputs:
+        #   concat  -> concatenate all inputs in depth
+        #   sum     -> sum all the inputs (must be same size!)
         self.combination_type = combination_type
+
+        # The final size to resize to based on shape_select from above:
         self.size_to_resize_to_func = size_to_resize_to_func if \
-            size_to_resize_to_func else self.reshape_size_for_long
+            size_to_resize_to_func else self.final_size_for_long
+
+        # By deafault the tf_node_func is tf_node_long
         self.tf_node_func = tf_node_func if tf_node_func else self.tf_node_long
 
-    def reshape_size_to(self, incoming_sizes):
+    def final_output_size(self, incoming_sizes):
         # incoming_sizes.items() =
         #               ( 'nickname' , ([size here],[[path],[path], ...]) )
-        # Get the final shape from a pre-defined or input function:
+        # Get the final shape from a pre-defined or input function. Note that
+        # this is a bit redundant and the function 'size_to_resize_to_func'
+        # essentially be called directly without this wrapper in place. The
+        # only reason this is here is for modularity and simplicity (we
+        # define what the transformation function should be when the Policy
+        # is initialized, and then that transformation function is never
+        # directly touched again, we only deal with the higher-level
+        # 'final_output_size' function)
         final_shape = self.size_to_resize_to_func(incoming_sizes)
         return final_shape
 
-    def reshape_size_for_maxavg(self, incoming_sizes):
+    def final_size_for_maxavg(self, incoming_sizes):
         # Find the max shape size in all the inputs:
         max_shape = max(incoming_sizes.items(), key=lambda x:
                         reduce(lambda p, q: p * q, x[1][0]))[1][0]
         return max_shape
 
-    def reshape_size_for_long(self, incoming_sizes):
+    def final_size_for_avg(self, incoming_sizes):
+        # Find the max shape size in all the inputs:
+        raise NotImplementedError()
+
+    def final_size_for_long(self, incoming_sizes):
         # Find the max shape size in all the inputs:
         long_shape = max(incoming_sizes.items(),
                          key=lambda x: max(len(t) for t in x[1]))[1][0]
         return long_shape
 
-    def reshape_size_for_short(self, incoming_sizes):
+    def final_size_for_short(self, incoming_sizes):
         # Find the max shape size in all the inputs:
         short_shape = min(incoming_sizes.items(),
                           key=lambda x: min(len(t) for t in x[1]))[1][0]
         return short_shape
 
-    def reshape_size_for_min(self, incoming_sizes):
+    def final_size_for_min(self, incoming_sizes):
         # Find the max shape size in all the inputs:
         min_shape = min(incoming_sizes.items(),
                         key=lambda x: reduce(lambda p,
@@ -117,19 +145,19 @@ class Policy(object):
         return min_shape
 
     def tf_node_long(self,
-                     incoming_input,
+                     input_nickname,
                      input_shape,
                      input_val,
                      desired_size,
                      name=''):
 
-        def is_bigger(shape1, shape2):
-            # Return True if shape1 has more neurons than shape2, False o/w
-            if reduce(lambda x, y: x * y, shape1) > reduce(lambda x, y: x * y,
-                                                           shape2):
-                return True
-            else:
-                return False
+        # def is_bigger(shape1, shape2):
+        #     # Return True if shape1 has more neurons than shape2, False o/w
+        #     if reduce(lambda x, y: x * y, shape1) \
+        #         > reduce(lambda x, y: x * y, shape2):
+        #         return True
+        #     else:
+        #         return False
 
         # If the number of dimensions in the input_shape is like an image:
         if len(input_shape) > 2:
@@ -151,7 +179,7 @@ class Policy(object):
                                       strides=strides,
                                       padding='VALID',
                                       name=name
-                                      + '_' + incoming_input
+                                      + '_' + input_nickname
                                       + '_harbor_maxpool')
             elif self.shape_select == 'avg':
                 pool = tf.nn.avg_pool(input_val,
@@ -159,7 +187,7 @@ class Policy(object):
                                       strides=strides,
                                       padding='VALID',
                                       name=name
-                                      + '_' + incoming_input
+                                      + '_' + input_nickname
                                       + '_harbor_avgpool')
             elif self.shape_select == 'up':
                 # Not sure if tf.image.resize_images is trainable...
@@ -169,7 +197,7 @@ class Policy(object):
 
             print '  >> Harbor of %s - resizing %s, want %s and got %s' % \
                 (name,
-                 incoming_input,
+                 input_nickname,
                  desired_size,
                  pool.get_shape().as_list())
             # Now append to a list of all the inputs

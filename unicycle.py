@@ -32,7 +32,7 @@ class Unicycle(object):
     def __init__(self):
         print 'Unicycle Initialized'
 
-    def build(self, dbgr=dbgr):
+    def build(self, json_file_name=None, dbgr=dbgr):
         """
         The main execution routine file for the Universal Neural
         Interpretation and Cyclicity Engine (UNICYCLE)
@@ -102,7 +102,7 @@ class Unicycle(object):
         dbgr('======\nSTEP 1\n JSON Import and Parse\n======================')
 
         # Import NODES and LINKS from JSON
-        nodes, links = json_import(dbgr=dbgr)
+        nodes, links = json_import(filename=json_file_name, dbgr=dbgr)
 
         #                      STEP 2
         #      ######          ######          ######

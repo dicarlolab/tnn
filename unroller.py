@@ -20,7 +20,7 @@ def unroller_call(input_sequence, G, last=None):
             out, state = G.node[node]['tf_cell'](inputs)
 
             G.node[node]['tf_cell'].update_outputs(out)
-            G.node[node]['tf_cell'].update_state(state)
+            G.node[node]['tf_cell'].update_states(state)
 
     last = G.node[
         [n for n in G.nodes() if

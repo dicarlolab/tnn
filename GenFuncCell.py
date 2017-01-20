@@ -54,15 +54,22 @@ class GenFuncCell(RNNCell):
             Determines the scope in which the Cell is located
 
         """
+
+        # ====== STATE_FUNCTIONS SETUP AND CLEANUP: ==========================
+
         # Check to see that state_fs is a list of functions, list-ify if not
         self._state_fs = state_fs if isinstance(state_fs, type([])) \
             else [state_fs]
+
         # Check every item of self._state_fs to see if it is a function,
         # if not then convert from string to function using function_lookup {}
         self._state_fs = [function_lookup[i] if isinstance(i, basestring)
                           else i for i in self._state_fs]
+
         # Fetch all the keyword arguments for the pre-memory functions (list)
         self._state_fs_kwargs = state_fs_kwargs
+
+        # ====== OUT_FUNCTIONS SETUP AND CLEANUP: ============================
 
         # Check to see that out_fs is a list of functions, list-ify if not
         self._out_fs = out_fs if isinstance(out_fs, type([])) else [out_fs]
@@ -72,23 +79,33 @@ class GenFuncCell(RNNCell):
                         for i in self._out_fs]
         # Fetch all the keyword arguments for the post-memory functions (list)
         self._out_fs_kwargs = out_fs_kwargs
-        ###
+
+        # ====== MEMORY SETUP: ===============================================
+
         self._memory_kwargs = memory_kwargs
-        ###
-        self._scope = type(self).__name__ if scope is None else scope
+
+        # ====== STATES SETUP: ===============================================
+
+        # States and outputs
         self._output_size = output_size if isinstance(output_size, type([])) \
             else output_size.as_list()
+        self.outputs = [tf.zeros(self._output_size)]
+
         self._state_size = state_size if isinstance(state_size, type([])) \
             else state_size.as_list()
-
-        ###
-        # The zero_state functions are inherited from the RNNCell
         self.states = [tf.zeros(self._state_size)]
-        self.outputs = [tf.zeros(self._output_size)]
+
+        # ====== HARBOR AND MISC SETUP: ======================================
+
+        # Harbor
         self.harbor = harbor
+
+        # Scope of GenFuncCell and sub-functions
+        self._scope = type(self).__name__ if scope is None else scope
 
     def __call__(self, input_):
         # Input is a dict {'nickname':Tensor}
+        print(input_)
         prev = self.harbor(input_)
         # This deals with input Harbors - janky!
         if isinstance(prev, type(tf.float32)):
@@ -160,6 +177,9 @@ class GenFuncCell(RNNCell):
         if t > len(self.outputs):
             raise Exception('GenFuncCell trying to access nonexistent output')
         return self.outputs[-t]
+
+    def update_states(self, new):
+        self.states.append(new)
 
     def update_outputs(self, new):
         self.outputs.append(new)
