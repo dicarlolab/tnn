@@ -9,23 +9,25 @@ TO-DO
 
 Things to do by next iteration of Unicycle:
 
-v Pass around NetworkX instead of lists
-	v Merge H into G
-	v Merge nodes into NX
-	v Merge node_out_size into NX
-	v Merge node_state_size into NX
-	v Merge node_harbors into NX
-	v Merge node_input_touch into NX
-	v Merge node_touch into NX
-	v Copy for H
-
-v Modify GenFuncCell to have methods to memoize outputs and states. Look into pruning.
-
 - Look into Harbor generalization, merge Harbor_Dummy into Harbor
 
-v flake8 things
+(1) Tests for small scale architectures like MNIST - make this a basic test.
+This should test that standard MNIST works as promised and correctly trains to the end, and compares favorably to existing trained MNIST.
 
-- Add tests!
+(2) Test MNIST + bypasses. This is primarily to ensure that the code works in a nontrivial circumstance, but should also achieve non-terrible numbers of possible.
 
-- Do training ooooh yeah - timing test and regression test. Benchmarks
+(3) Test MNIST + feedbacks.
 
+(4) Train on AlexNet and compare
+
+(5) Train on DenseNet and compare
+
+(6) Train on VGG and compare
+
+For all things, make sure that:
+
+-- code runs in a reasonable amount of time
+-- using a reasonable amount of memory
+-- appropriate training losses are achieved
+
+NB: Items (1)-(3) above should be in the form of tests in the test suite

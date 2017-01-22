@@ -91,8 +91,8 @@ class Harbor(object):
         elif self.combination_type == 'sum':
             out = tf.add_n(big_input_list, name=self.name + '_harbor_sum')
 
-        print '  >> Harbor of %s - out size %s' % (self.name,
-                                                   out.get_shape().as_list())
+        print ' Harbor of %s >>  out size %s' % (self.name,
+                                                 out.get_shape().as_list())
 
         # Finally, return the resulting Tensor
         return out

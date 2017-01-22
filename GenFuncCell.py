@@ -106,13 +106,15 @@ class GenFuncCell(RNNCell):
     def __call__(self, input_):
         # Input is a dict {'nickname':Tensor}
         prev = self.harbor(input_)
+        print(prev)
+        print(input_)
         # This deals with input Harbors - janky!
         if isinstance(prev, type(tf.float32)):
             self.state_old = self.state
             self.state = input_
             self.output = input_
             return self.output, self.state
-        print ('  >> GenFuncCell call of node %s - post-Harbor size %s' % (
+        print ('  GenFuncCell call of node %s >>  post-Harbor size %s' % (
             self._scope,
             prev.get_shape().as_list())
         )
@@ -129,20 +131,21 @@ class GenFuncCell(RNNCell):
             # the current function, and collect the output
             prev = cur_f(prev, **cur_f_args)
 
-        print('  >> GenFuncCell of node %s - post-state size %s' % (
+        print('  GenFuncCell call of node %s >>  post-state size %s' % (
             self._scope,
             prev.get_shape().as_list())
         )
-        print('  >> GenFuncCell of node %s - pre-memory state size %s' % (
+
+        print('  GenFuncCell call of node %s >>  pre-memory state size %s' % (
             self._scope,
             self.get_state().get_shape().as_list())
         )
         # Now, we update the memory!
         new_state = self.memory(in_layer=prev, **self._memory_kwargs)
 
-        print('  >> GenFuncCell of node %s - post-memory state size %s' % (
+        print('  GenFuncCell call of node %s >>  post-memory state size %s' % (
             self._scope,
-            new_state)
+            new_state.get_shape().as_list())
         )
 
         new_output = new_state
@@ -158,9 +161,9 @@ class GenFuncCell(RNNCell):
             # the current function, and collect the output
             new_output = cur_f(new_output, **cur_f_args)
 
-        print('  >> GenFuncCell of node %s - post-out-func size %s' % (
+        print('  GenFuncCell call of node %s >>  post-out-func size %s' % (
             self._scope,
-            new_output)
+            new_output.get_shape().as_list())
         )
 
         return new_output, new_state
@@ -187,7 +190,7 @@ class GenFuncCell(RNNCell):
         # Loop it's own OUTPUT into itself if no INPUT available, otherwise
         # loop the INPUT in, along with a scaled STATE.
         # Return the resultant addition of scaled STATE and INPUT/OUTPUT
-        print('MEMORY CALLED!')
+        print('    %s MEMORY CALLED!' % (self._scope))
         if in_layer is None:
             in_layer = self.get_output()
         initializer = tf.constant_initializer(value=memory_decay)
