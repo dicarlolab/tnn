@@ -7,8 +7,9 @@ from __future__ import division, print_function, absolute_import
 import numpy as np
 import tensorflow as tf
 
-from tfutils import base, optimizer     #, data
+from tfutils import optimizer     # , base, data
 import mod_data as data
+import mod_base as base
 
 
 import unicycle
@@ -64,8 +65,8 @@ params = {
     'save_params': {
         'host': 'localhost',
         'port': 27017,
-        'dbname': 'tconvnet-alexnet-test',
-        'collname': 'alexnet',
+        'dbname': 'tconvnet-mnist-test',
+        'collname': 'mnist',
         'exp_id': 'trainval0',
 
         'do_save': True,
@@ -136,7 +137,7 @@ params = {
             'data_params': {
                 'func': data.MNIST,
                 'data_path': DATA_PATH,  # path to image database
-                'group': 'val'
+                'group': 'validation'
             },
             'targets': {
                 'func': in_top_k,
@@ -156,20 +157,6 @@ params = {
 
     'log_device_placement': False,  # if variable placement has to be logged
 }
-
-
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-
 
 
 if __name__ == '__main__':

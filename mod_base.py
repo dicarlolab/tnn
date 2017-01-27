@@ -7,7 +7,7 @@ import importlib
 import argparse
 import json
 import copy
-import tfutils.logging as logging
+import logging
 import tarfile
 import cPickle
 import threading
@@ -903,6 +903,8 @@ def train_from_params(save_params,
 
         if loss_params is None:
             loss_params = {}
+        print('train_inputs ->', train_inputs)
+        print('train_outputs ->', train_outputs)
         loss_params, loss = get_loss(train_inputs, train_outputs, **loss_params)
 
         if learning_rate_params is None:
@@ -1103,5 +1105,3 @@ in a readable format.
             val = v.eval(session=self.sess)
             np.save(pth, val)
 """
-Contact GitHub API Training Shop Blog About
-© 2017 GitHub, Inc. Terms Privacy Security Status Help

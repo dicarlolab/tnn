@@ -340,7 +340,7 @@ class MNIST(object):
 
         if data_path is None:
             data_path = '/tmp'
-        data = read_data_sets(data_path)
+        data = read_data_sets(data_path)    # , one_hot=True)
 
         if group == 'train':
             self.data = data.train
@@ -356,7 +356,7 @@ class MNIST(object):
 
     def next(self):
         batch = self.data.next_batch(self.batch_size)
-        feed_dict = {'images': batch[0], 'labels': batch[1].astype(np.int32)}
+        feed_dict = {'images': batch[0], 'labels': np.squeeze(batch[1].astype(np.int32))}
         return feed_dict
 
 
