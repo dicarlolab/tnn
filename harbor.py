@@ -64,16 +64,23 @@ class Harbor(object):
             The incoming inputs into the Harbor (or technically into the
             GenFuncCell that the Harbor belongs to)
             {'nickname':Tensor, ...}
+
+        Returns:
+        - TF graph node if the Harbor has inputs
         """
 
+        # Check to see if the Harbor belongs to an input cell
+        if len(inputs) == 0:
+            raise NotImplementedError
+
         big_input_list = []
-        print 'Inputs:', inputs
+        print ' Harbor call of cell %s:' % (self.name)
+        print ' Inputs:', inputs
         for (nickname, input_tensor) in inputs.items():
-            print 'Harbor call of cell %s for resizing output of node %s' % \
-                (self.name, nickname)
+            print ' Resizing output of node %s' % (nickname)
             input_shape = input_tensor.get_shape().as_list()
 
-            print 'TF Size:', input_shape
+            print ' TF Size:', input_shape
 
             # Function to create the TF node based on current input name,
             # shape, TF value and desired size - returns pool TF node that is

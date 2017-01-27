@@ -40,9 +40,13 @@ def init_root_node_size_and_harbor(G,
         G.node[this_name]['output_size'] = [BATCH_SIZE] \
             + i['functions'][0]['output_size']
         G.node[this_name]['state_size'] = G.node[this_name]['output_size'][:]
-        G.node[this_name]['harbor'] = Harbor_Dummy(
-            G.node[this_name]['output_size'],
-            input_=not bias)
+        # Create a Harbor instance
+        G.node[this_name]['harbor'] = \
+            Harbor({this_name: (G.node[this_name]['output_size'], [])})
+        # G.node[this_name]['harbor'] = Harbor_Dummy(
+        #     G.node[this_name]['output_size'],
+        #     input_=not bias)
+
         G.graph['input_touch_order'].append(this_name)
 
     return G
