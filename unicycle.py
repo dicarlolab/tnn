@@ -147,7 +147,7 @@ class Unicycle(object):
         #       ####################################
         #      ######          ######          ######
 
-        dbgr('======\nSTEP 7\n TF Unroller\n========================')
+        dbgr('======\nTF Unroller\n========================')
 
         G, last = unroller_call(
             input_sequence,
@@ -156,22 +156,29 @@ class Unicycle(object):
 
         return last
 
-    def alexnet_demo_out(self, training_input=[], **kwargs):
+    def alexnet_demo_out(self, inputs=[], **kwargs):
         G = self.build()
-        last_ = self(training_input, G)
+        last_ = self(inputs, G)
         return last_
 
-    def unicycle_tfutils(self, training_data, **kwargs):
-        m = self.alexnet_demo_out(training_data, **kwargs)
-        return m.state, {'input': 'image_input_1',
-                         'type': 'lrnorm',
-                         'depth_radius': 4,
-                         'bias': 1,
-                         'alpha': 0.0001111,
-                         'beta': 0.00001111}
+    def mnist_demo_out(self, inputs=[], **kwargs):
+        G = self.build(json_file_name='sample_mnist.json')
+        last_ = self(inputs, G)
+        return last_
+
+
+def unicycle_tfutils(inputs, **kwargs):
+    m = Unicycle()
+    o = m.mnist_demo_out(inputs, **kwargs)
+    return o.get_state(), {'input': 'image_input_1',
+                           'type': 'lrnorm',
+                           'depth_radius': 4,
+                           'bias': 1,
+                           'alpha': 0.0001111,
+                           'beta': 0.00001111}
 
 
 if __name__ == '__main__':
     print 'THIS\nIS\nA\nTEST\nUNICYCLE\nALEXNET\nINITIALIZATION'
     a = Unicycle()
-    b = a.alexnet_demo_out(['', '', '', '', '', '', '', '', '', ''])
+    b = a.mnist_demo_out(['', '', '', '', '', '', '', '', '', ''])
