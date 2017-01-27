@@ -903,8 +903,7 @@ def train_from_params(save_params,
 
         if loss_params is None:
             loss_params = {}
-        print('train_inputs ->', train_inputs)
-        print('train_outputs ->', train_outputs)
+
         loss_params, loss = get_loss(train_inputs, train_outputs, **loss_params)
 
         if learning_rate_params is None:

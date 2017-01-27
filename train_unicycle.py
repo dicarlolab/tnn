@@ -107,7 +107,7 @@ params = {
             'n_threads': 4,
             'seed': 0,
         },
-        'thres_loss': 1000,
+        'thres_loss': 100000,
         'num_steps': 90 * NUM_BATCHES_PER_EPOCH  # number of steps to train
     },
 
