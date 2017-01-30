@@ -93,9 +93,10 @@ def construct_G(nodes, links, draw=False, dbgr=dbgr_silent):
             G.edge[fr][to]['feedback'] = True
 
     # Now the Graph G has edges that are properly labelled as feedback or not
-    # Mark the output nodes:
+    # Mark the output nodes (find nodes that don't have non-feedback links):
     for node in G.nodes():
-        if len(G.neighbors(node)) == 0:
+        if len([i for i in G.neighbors(node)
+                if G.edge[node][i]['feedback'] is False]) == 0:
             G.node[node]['output_layer'] = True
 
     dbgr('done!')

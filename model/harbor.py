@@ -268,7 +268,6 @@ class Policy(object):
             rolling_sum = 0
             for n, i in incoming_sizes.items():
                 rolling_sum += reduce(lambda x, y: x * y, i[0][1:])
-                print(rolling_sum)
             concat_shape = [batch_size, rolling_sum]
             return concat_shape
         else:
