@@ -20,7 +20,7 @@ def json_import(filename=None, dbgr=dbgr_silent):
     if not filename:
         if len(sys.argv) < 2:
             dbgr('No JSON settings file given! Scanning current directory...')
-            for f in os.listdir('.'):
+            for f in os.listdir('json'):
                 if f.endswith('.json'):
                     dbgr('Using first discovered JSON file in current path: %s'
                          % (f.upper()))
@@ -34,7 +34,7 @@ def json_import(filename=None, dbgr=dbgr_silent):
 
     dbgr('Using JSON file %s for import...' % (json_file_name.upper()), 1)
 
-    with open(json_file_name) as data_file:
+    with open('json/' + json_file_name) as data_file:
         json_data = json.load(data_file)
 
     dbgr('done!')
