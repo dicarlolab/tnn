@@ -10,15 +10,20 @@ Returns
  - Links    <List>  List of Tuples for every link in the Graph
 """
 
-import sys
+# import sys
 import os
 import json
 from dbgr import dbgr_silent
+import argparse
 
 
 def json_import(filename=None, dbgr=dbgr_silent):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--file', default='sample_mnist.json', type=str)
+    args = vars(parser.parse_args())
+
     if not filename:
-        if len(sys.argv) < 2:
+        if 'file' not in args:
             dbgr('No JSON settings file given! Scanning current directory...')
             for f in os.listdir('json'):
                 if f.endswith('.json'):
@@ -28,7 +33,7 @@ def json_import(filename=None, dbgr=dbgr_silent):
                     break
         else:
             # Fetch the name of the JSON file from the command line args
-            json_file_name = sys.argv[1]
+            json_file_name = args['file']
     else:
         json_file_name = filename
 

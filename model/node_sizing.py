@@ -68,13 +68,6 @@ def root_node_size_find(G, dbgr=dbgr_silent):
     # Initialize biases
     G = init_root_node_size_and_harbor(G, bias=True)
 
-    dbgr('Starting Node Output Sizes:', newline=False)
-    for i in sorted(G.nodes()):
-        dbgr('   ' + i.ljust(max([len(j) for j in G.nodes()]))
-             + ':' + str(G.node[i]['output_size'] if 'output_size' in
-                         G.node[i] else []), newline=False)
-    dbgr(newline=False)
-
     return G
 
 
@@ -105,7 +98,7 @@ def all_node_size_find(G,
                     # Then, gather the sizes of all incoming nodes into a
                     # dict: {'nickname': (size, all_simple_paths)}
                     incoming_sizes = {}
-                    for pred in G.predecessors(node):
+                    for pred in get_forward_pred(G, node):
                         incoming_sizes[pred] = \
                             (G.node[pred]['output_size'], list(
                                 chain(*[nx.all_simple_paths(G, st, pred)

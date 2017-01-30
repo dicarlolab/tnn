@@ -1081,6 +1081,7 @@ def get_params():
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--params', type=json.loads, default=None)
     parser.add_argument('-g', '--gpu', default='0', type=str)
+    parser.add_argument('-f', '--file', default='sample_mnist.json', type=str)
     args = vars(parser.parse_args())
     os.environ['CUDA_VISIBLE_DEVICES'] = args['gpu']
     for p in filter(lambda x: x.endswith('_func'), args):

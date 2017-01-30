@@ -156,20 +156,15 @@ class Unicycle(object):
 
         return last
 
-    def alexnet_demo_out(self, inputs=[], **kwargs):
+    def demo_out(self, inputs=[], **kwargs):
         G = self.build()
-        last_ = self(inputs, G)
-        return last_
-
-    def mnist_demo_out(self, inputs=[], **kwargs):
-        G = self.build(json_file_name='sample_mnist.json')
         last_ = self(inputs, G)
         return last_
 
 
 def unicycle_tfutils(inputs, **kwargs):
     m = Unicycle()
-    o = m.mnist_demo_out(inputs, **kwargs)
+    o = m.demo_out(inputs, **kwargs)
     return o.get_state(), {'input': 'image_input_1',
                            'type': 'lrnorm',
                            'depth_radius': 4,
@@ -178,7 +173,7 @@ def unicycle_tfutils(inputs, **kwargs):
                            'beta': 0.00001111}
 
 
-if __name__ == '__main__':
-    print 'THIS\nIS\nA\nTEST\nUNICYCLE\nALEXNET\nINITIALIZATION'
-    a = Unicycle()
-    b = a.mnist_demo_out(['', '', '', '', '', '', '', '', '', ''])
+# if __name__ == '__main__':
+#     print 'THIS\nIS\nA\nTEST\nUNICYCLE\nALEXNET\nINITIALIZATION'
+#     a = Unicycle()
+#     b = a.mnist_demo_out(['', '', '', '', '', '', '', '', '', ''])
