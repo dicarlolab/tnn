@@ -56,7 +56,7 @@ IMAGE_SIZE_CROP = 224
 params = {
     'save_params': {
         'host': 'localhost',
-        'port': 31001,
+        'port': 29101,
         'dbname': 'tconvnet-alexnet-test',
         'collname': 'alexnet',
         'exp_id': 'trainval0',
