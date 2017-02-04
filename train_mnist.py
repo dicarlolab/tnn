@@ -169,6 +169,13 @@ params = {
 }
 
 
-if __name__ == '__main__':
+def main(custom_step_limit=None):
     base.get_params()
+    if custom_step_limit and isinstance(custom_step_limit, type(123)):
+        params['train_params']['num_steps'] = custom_step_limit
     base.train_from_params(**params)
+    return True
+
+
+if __name__ == '__main__':
+    main()
