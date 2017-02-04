@@ -8,8 +8,8 @@ import sys
 import numpy as np
 import tensorflow as tf
 
-from tfutils import optimizer     # , base, data
-import mod_data as data
+from tfutils import optimizer, data     # , base, data
+# import mod_data as data
 import mod_base as base
 
 # little hack to include model folder
@@ -18,7 +18,7 @@ modpath = os.sep.join(bp + ['tconvnet/model'])
 sys.path.insert(0, modpath)
 import unicycle
 
-DATA_PATH = '/mnt/data/imagenet_omind7/data.raw'
+DATA_PATH = '/mnt/data/imagenet2012.hdf5'
 RESTORE_VAR_FILE = 'computed/alexnet_test/'
 
 
