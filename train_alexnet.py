@@ -1,7 +1,6 @@
 """
 Unicycle Training using TF-Utils
 """
-
 from __future__ import division, print_function, absolute_import
 
 import numpy as np
@@ -14,13 +13,6 @@ import mod_base as base
 
 import unicycle
 
-# from tensorflow.examples.tutorials.mnist import input_data
-# mnist = input_data.read_data_sets("MNIST/", one_hot=True)
-
-# host = os.uname()[1]
-# if host.startswith('node') or host == 'openmind7':  # OpenMind
-#     DATA_PATH = '/om/user/qbilius/imagenet/data.raw'
-# else:  # agents
 DATA_PATH = '/mnt/data/imagenet_omind7/data.raw'
 RESTORE_VAR_FILE = 'computed/alexnet_test/'
 
@@ -58,15 +50,15 @@ def exponential_decay(global_step,
 
 
 BATCH_SIZE = 256
-NUM_BATCHES_PER_EPOCH = data.MNIST.N_TRAIN // BATCH_SIZE
-IMAGE_SIZE_CROP = 28    # 28 for MNIST, 224 for ImageNet
+NUM_BATCHES_PER_EPOCH = data.ImageNet.N_TRAIN // BATCH_SIZE
+IMAGE_SIZE_CROP = 224
 
 params = {
     'save_params': {
         'host': 'localhost',
-        'port': 27017,
-        'dbname': 'tconvnet-mnist-test',
-        'collname': 'mnist',
+        'port': 31001,
+        'dbname': 'tconvnet-alexnet-test',
+        'collname': 'alexnet',
         'exp_id': 'trainval0',
 
         'do_save': True,
@@ -89,16 +81,17 @@ params = {
     },
 
     'model_params': {
-        'func': unicycle.unicycle_tfutils,
+        'func': unicycle.alexnet_tfutils,
         'seed': 0,
         'norm': False  # do you want local response normalization?
     },
 
     'train_params': {
         'data_params': {
-            'func': data.MNIST,
+            'func': data.ImageNet,
             'data_path': DATA_PATH,
             'group': 'train',
+            'crop_size': IMAGE_SIZE_CROP,
             'batch_size': 1
         },
         'queue_params': {
@@ -107,7 +100,7 @@ params = {
             'n_threads': 4,
             'seed': 0,
         },
-        'thres_loss': 100000,
+        'thres_loss': 1000,
         'num_steps': 90 * NUM_BATCHES_PER_EPOCH  # number of steps to train
     },
 
@@ -115,6 +108,7 @@ params = {
         'targets': 'labels',
         'agg_func': tf.reduce_mean,
         'loss_per_case_func': tf.nn.sparse_softmax_cross_entropy_with_logits,
+        #'loss_per_case_func_params':
     },
 
     'learning_rate_params': {
@@ -135,9 +129,10 @@ params = {
     'validation_params': {
         'topn': {
             'data_params': {
-                'func': data.MNIST,
+                'func': data.ImageNet,
                 'data_path': DATA_PATH,  # path to image database
-                'group': 'validation'
+                'group': 'val',
+                'crop_size': IMAGE_SIZE_CROP,  # size after cropping an image
             },
             'targets': {
                 'func': in_top_k,
@@ -149,7 +144,7 @@ params = {
                 'n_threads': 4,
                 'seed': 0,
             },
-            'num_steps': data.MNIST.N_VAL // BATCH_SIZE + 1,
+            'num_steps': data.ImageNet.N_VAL // BATCH_SIZE + 1,
             'agg_func': lambda x: {k: np.mean(v) for k, v in x.items()},
             'online_agg_func': online_agg
         },
@@ -159,6 +154,12 @@ params = {
 }
 
 
-if __name__ == '__main__':
+def main(num_steps_limit=None):
     base.get_params()
+    if num_steps_limit:
+        params['train_params']['num_steps'] = num_steps_limit
     base.train_from_params(**params)
+
+
+if __name__ == '__main__':
+    main()

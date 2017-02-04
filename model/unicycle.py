@@ -34,7 +34,7 @@ class Unicycle(object):
 
     def build(self, json_file_name=None, dbgr=dbgr):
         """
-        The main execution routine file for the Universal Neural
+        The main build routine for the Universal Neural
         Interpretation and Cyclicity Engine (UNICYCLE)
 
         The way this works is the following:
@@ -43,7 +43,8 @@ class Unicycle(object):
         =======
          High-level description of the system is fed in via a JSON object-
          bearing file that is passed in as a command line argument when the
-         script is run. Here we get the raw metadata from the JSON file and
+         script is run (use `-f <json_file_name_here.json>` argument in the
+         command line). Here we get the raw metadata from the JSON file and
          store it in a list of dictionaries, as well as a list of tuples of
          (from,to) links in the graph.
 
@@ -54,8 +55,10 @@ class Unicycle(object):
          use this nickname to look up relevant node's metadata in the node
          dictionary list we acquired in step 1.
 
-         Using the Network-X graph G we find all edges that are feedback and
-         mark them as such with a 'feedback' attribute
+         Using the Network-X graph G we also find all edges that are feedback
+         edges and mark them accordingly. This Network-X DiGraph is what we
+         pass around and populate with all the different objects and metadata
+         about the different nodes (TF objects as well as Python objects).
 
         Step 3
         =======
@@ -64,34 +67,35 @@ class Unicycle(object):
          Tensors will be scaled or added or concatenated and the resulting
          Tensor will be used as input to the functional "conveyor belt").
          While the Harbor is the place where the actual resizing happens, we
-         also have the Harbor-Master policy. This policy can be specified in
-         the node metadata in the JSON, or if it isn't specified it can be
-         inferred from the default settings (default subject to modification
-         too).
+         also have the Harbor Policy. The Policy can be specified in the node
+         metadata in the JSON, or if it isn't specified it can be inferred
+         from the default settings (default subject to modification too). The
+         Policy object has specific transformations defined - these trans-
+         formations are to be applied by Harbor on the incoming inputs, and
+         so whereas the Harbor is a clean generalized framework for the input
+         to be worked on, the Policy is the object that contains the nitty-
+         gritty details of what exactly should happen where. Harbors can
+         receive custom functions from the user by receiving a user-created
+         Policy.
 
-         For every NODE:
-         - Collect all non-feedback inputs, find their sizes, push list of
-         sizes along with Harbor-Master policy into general Harbor-Master
-         utility function to find ultimate size.
-         - Create a reference dictionary for node metadata that has incoming
-         inputs as keys and scaling values as values.
-         - Calculate all final sizes for all nodes, use for feedback up and
-         down the line.
-
-        Step 6
+        Step 4
         =======
-         Tensor creation.
+         Once all the sizes for all the nodes have been calculated, we
+         initialize all of them one-by-one in order of dependence (input
+         first, then GenFuncCells right after the input, etc). Initialization
+         allows us to create TF nodes that we save for each GenFuncCell in the
+         Network-X graph, and also allows us to link up different GenFuncCells
+         together in the TF graph using Harbors. Here the recurrent (feedback)
+         edges of the graph are also processed, so the final TF Graph is a
+         properly connected and resized Graph.
 
-        Step 7
-        =======
-         Perform proper RNN unrolling of nodes within 1 time step. Thi
-         cheating, as the RNN is essentially unrolled through a single
-         memoized states it's parent and predecessor Cells are queried
-         for, creating the illusion of a true RNN unroll. In reality,
-         structure is preserved
+         We then return the Network-X object containing all of this info.
+
+
 
         Let's kick ass
         """
+
         imgs.unicycle_logo()
 
         #                      STEP 1
@@ -142,6 +146,17 @@ class Unicycle(object):
         return G
 
     def __call__(self, input_sequence, G, dbgr=dbgr):
+        """
+        When a built and initialized Unicycle instance is called, a custom-
+        written unroller 'walks' through the TF graph, and pushes the input
+        data from the beginning to the end through time and space. For the
+        purposes of Unicycle, we unroll through time, and at every time step
+        we unroll all of the nodes and push the input (or the output from the
+        previous time point) through. The function returns the TF node of the
+        output GenFuncCell.
+
+        """
+
         #                      STEP 7
         #      ######          ######          ######
         #       ####################################
@@ -156,15 +171,43 @@ class Unicycle(object):
 
         return last
 
-    def demo_out(self, inputs=[], **kwargs):
-        G = self.build()
+    def build_and_output(self, inputs=[], json_file_name=None, **kwargs):
+        G = self.build(json_file_name=json_file_name)
         last_ = self(inputs, G)
         return last_
 
 
 def unicycle_tfutils(inputs, **kwargs):
+    """
+    This function is not specific to any architecture, the particulars of the
+    design of the network are to be specified in a JSON file and saved in the
+    'json' folder in the root of tconvnet. To point Unicycle to the desired
+    JSON file just use the `-f <json_file_name_here.json>` command line
+    argument.
+    We initialize the Unicycle graph with the AlexNet architecture, then we
+    push the `inputs` through and receive the state of the output node
+    """
     m = Unicycle()
-    o = m.demo_out(inputs, **kwargs)
+    o = m.build_and_output(inputs, **kwargs)
+    return o.get_state(), {'input': 'image_input_1',
+                           'type': 'lrnorm',
+                           'depth_radius': 4,
+                           'bias': 1,
+                           'alpha': 0.0001111,
+                           'beta': 0.00001111}
+
+
+def alexnet_tfutils(inputs, **kwargs):
+    """
+    This function is specific to AlexNet (JSON file in build_and_output params
+    below).
+    We initialize the Unicycle graph with the AlexNet architecture, then we
+    push the `inputs` through and receive the state of the output node
+    """
+    m = Unicycle()
+    o = m.build_and_output(inputs,
+                           json_file_name='sample_alexnet.json',
+                           **kwargs)
     return o.get_state(), {'input': 'image_input_1',
                            'type': 'lrnorm',
                            'depth_radius': 4,
