@@ -3,6 +3,8 @@ Unicycle Training using TF-Utils
 """
 from __future__ import division, print_function, absolute_import
 
+import os
+import sys
 import numpy as np
 import tensorflow as tf
 
@@ -10,7 +12,10 @@ from tfutils import optimizer     # , base, data
 import mod_data as data
 import mod_base as base
 
-
+# little hack to include model folder
+bp = os.path.dirname(os.path.realpath('.')).split(os.sep)
+modpath = os.sep.join(bp + ['tconvnet/model'])
+sys.path.insert(0, modpath)
 import unicycle
 
 DATA_PATH = '/mnt/data/imagenet_omind7/data.raw'
