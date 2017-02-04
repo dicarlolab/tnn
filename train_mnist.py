@@ -74,7 +74,7 @@ IMAGE_SIZE_CROP = 28    # 28 for MNIST, 224 for ImageNet
 params = {
     'save_params': {
         'host': 'localhost',
-        'port': 27017,
+        'port': 32108,
         'dbname': 'tconvnet-mnist-test',
         'collname': 'mnist',
         'exp_id': 'trainval0',
