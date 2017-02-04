@@ -272,7 +272,7 @@ class DBInterface(object):
                 tf_saver.restore(self.sess, cache_filename)
                 log.info('... done restoring.')
         if not self.do_restore or self.load_data is None:
-            init = tf.global_variables_initializer()
+            init = tf.initialize_all_variables()
             self.sess.run(init)
             log.info('Model variables initialized from scratch.')
 
