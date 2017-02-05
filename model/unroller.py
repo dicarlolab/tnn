@@ -9,7 +9,7 @@ import tensorflow as tf
 def unroller_call(input_sequence, G, last=None):
     # Calculate ntimes from length of input_sequence and nx_graph structure
 
-    ntimes = 10     # This is a hack, should be len(input_sequence)
+    ntimes = 8     # This is a hack, should be len(input_sequence)
     # Loop over time
     for t in range(ntimes):
         # Loop over nodes
@@ -20,6 +20,8 @@ def unroller_call(input_sequence, G, last=None):
                 # input node:
                 # This will have input_sequence addressing when
                 # I multiply the input_sequence through time - TO DO!
+                # For now every input cell gets the same image as the output
+                # for every time step
                 G.node[node]['tf_cell'].update_outputs(input_sequence['images'])
             else:
                 inputs = {p: G.node[p]['tf_cell'].get_output() for p in preds}

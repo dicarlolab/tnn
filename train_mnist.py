@@ -9,7 +9,7 @@ import sys
 import numpy as np
 import tensorflow as tf
 
-from tfutils import optimizer #, base #, data
+from tfutils import optimizer   # , base #, data
 import mod_data as data
 import mod_base as base
 

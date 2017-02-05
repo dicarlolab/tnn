@@ -104,6 +104,8 @@ def all_node_size_find(G,
                                 chain(*[nx.all_simple_paths(G, st, pred)
                                         for st in root_nodes])))
 
+                    dbgr('Incoming sizes of %s: %s' % (node, incoming_sizes))
+
                     # Create a Policy instance
                     current_policy = Policy()
 
