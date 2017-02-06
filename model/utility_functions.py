@@ -14,16 +14,25 @@ def create_kwargs_conv(fn, input_size, name):
     assert 'type' in fn, 'Type of function not in function!'
     assert fn['type'] == 'conv', 'Type has to be CONV, but is %s' % \
         (fn['type'])
-    filter_tensor = \
-        tf.get_variable('filter_tensor_%s' % (name),
-                        fn['filter_size']
-                        + [input_size[-1]]
-                        + [fn['num_filters']],
-                        initializer=tf.random_uniform_initializer(0, 1)
-                        )
-    out_dict['filter'] = filter_tensor
-    out_dict['strides'] = [1, fn['stride'], fn['stride'], 1]
-    out_dict['padding'] = fn['padding'].upper()
+    # filter_tensor = \
+    #     tf.get_variable('filter_tensor_%s' % (name),
+    #                     fn['filter_size']
+    #                     + [input_size[-1]]
+    #                     + [fn['num_filters']],
+    #                     initializer=initializer()
+    #                     )
+    # out_dict['filter'] = filter_tensor
+    out_dict['out_shape'] = fn['num_filters']
+    out_dict['ksize'] = fn['filter_size']
+    out_dict['stride'] = fn['stride']
+    if 'padding' in fn:
+        out_dict['padding'] = fn['padding'].upper()
+    if 'init' in fn:
+        out_dict['init'] = initializer(
+            kind=fn['init'],
+            stddev=fn['stddev'] if 'stddev' in fn else .01)
+    if 'bias' in fn:
+        out_dict['bias'] = fn['bias']
     out_dict['name'] = str(name) if isinstance(name, basestring) \
         else 'conv_%s' % (str(randint(1, 1000)))
 
@@ -83,6 +92,13 @@ def create_kwargs_fc(fn, input_size):
     assert fn['type'] == 'fc', 'Type has to be FC, but is %s' % (fn['type'])
 
     out_dict['output_size'] = fn['output_size']
+    if 'init' in fn:
+        init = initializer(kind=fn['init'])
+    else:
+        init = initializer()
+    out_dict['init'] = init
+    if 'bias' in fn:
+        out_dict['bias'] = fn['bias']
     return out_dict, calc_size_after(input_size, fn)
 
 
@@ -191,3 +207,16 @@ def fetch_node(nickname='no_nickname_given', graph=None, **kwargs):
                      if i not in matching]
 
     return matching
+
+
+def initializer(self, kind='xavier', stddev=.01, seed=None):
+    if kind == 'xavier':
+        init = tf.contrib.layers.initializers.xavier_initializer(
+            seed=seed if seed else randint(1, 1000))
+    elif kind == 'trunc_norm':
+        init = tf.truncated_normal_initializer(
+            mean=0, stddev=stddev, seed=seed if seed else randint(1, 1000))
+    else:
+        raise ValueError('Please provide an appropriate initialization '
+                         'method: xavier or trunc_norm')
+    return init

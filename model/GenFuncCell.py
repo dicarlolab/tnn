@@ -23,7 +23,7 @@ class GenFuncCell(RNNCell):
                  state_size=None,
                  seed=None,
                  scope=None):
-        function_lookup = {'conv': tf.nn.conv2d,
+        function_lookup = {'conv': self.conv,
                            'maxpool': tf.nn.max_pool,
                            'relu': tf.nn.relu,
                            'norm': tf.nn.local_response_normalization,
@@ -209,7 +209,7 @@ class GenFuncCell(RNNCell):
         new = tf.mul(state, decay_factor) + in_layer
         return new
 
-    def fc(self, input_, output_size):
+    def fc(self, input_, output_size, init, bias=1):
         # Move everything into depth so we can perform a single matrix mult.
         batch_size = input_.get_shape()[0].value
         reshape = tf.reshape(input_, [batch_size, -1])
@@ -217,13 +217,51 @@ class GenFuncCell(RNNCell):
         weights = tf.get_variable(
             'weights_%s' % (self._scope),
             shape=[dim, output_size],
-            initializer=tf.random_normal_initializer(0.5, 0.1))
+            initializer=init)
         biases = tf.get_variable(
             'biases_%s' % (self._scope),
             shape=[output_size],
             initializer=tf.constant_initializer(0.1))
         mulss = tf.nn.relu(tf.matmul(reshape, weights) + biases)
         return mulss
+
+    def conv(self,
+             in_layer,
+             out_shape,
+             ksize=3,
+             stride=1,
+             padding='SAME',
+             init=tf.contrib.layers.initializers.xavier_initializer(),
+             stddev=.01,
+             bias=0,
+             weight_decay=0,
+             name=''):
+        in_shape = in_layer.get_shape().as_list()[-1]
+
+        if isinstance(ksize, int):
+            ksize1 = ksize
+            ksize2 = ksize
+        else:
+            ksize1, ksize2 = ksize
+
+        kernel = tf.get_variable(
+            initializer=init,
+            shape=[ksize1, ksize2, in_shape, out_shape],
+            dtype=tf.float32,
+            regularizer=tf.contrib.layers.l2_regularizer(weight_decay),
+            name='filter_tensor_%s' % (name))
+        conv = tf.nn.conv2d(in_layer,
+                            kernel,
+                            strides=[1, stride, stride, 1],
+                            padding=padding)
+        if bias:
+            biases = tf.get_variable(initializer=tf.constant_initializer(bias),
+                                     shape=[out_shape],
+                                     dtype=tf.float32,
+                                     name='conv_bias_%s' % (name))
+            conv = tf.nn.bias_add(conv, biases)
+
+        return conv
 
     def zero_state(self):
         return tf.zeros(self._state_size)

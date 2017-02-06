@@ -10,10 +10,10 @@
     }, 
     { "nickname":"conv_1",  
       "functions":[{ "type":"conv", 
-                     "filter_size":[11,11],
+                     "filter_size":11,
                      "num_filters":48,
                      "stride":4,
-                     "padding":"same"
+                     "padding":"valid"
                    },
                    { "type":"relu"
                    },
@@ -32,7 +32,7 @@
     },
     { "nickname":"conv_2", 
       "functions":[{ "type":"conv", 
-                     "filter_size":[5,5],
+                     "filter_size":5,
                      "num_filters":128,
                      "stride":1,
                      "padding":"same"
@@ -54,7 +54,7 @@
     },
     { "nickname":"conv_3", 
       "functions":[{ "type":"conv", 
-                     "filter_size":[3,3],
+                     "filter_size":3,
                      "num_filters":192,
                      "stride":1,
                      "padding":"same"
@@ -66,7 +66,7 @@
     },
     { "nickname":"conv_4", 
       "functions":[{ "type":"conv", 
-                     "filter_size":[3,3],
+                     "filter_size":3,
                      "num_filters":192,
                      "stride":1,
                      "padding":"same"
@@ -78,7 +78,7 @@
     },
     { "nickname":"conv_5", 
       "functions":[{ "type":"conv", 
-                     "filter_size":[3,3],
+                     "filter_size":3,
                      "num_filters":128,
                      "stride":1,
                      "padding":"same"
@@ -95,7 +95,9 @@
     },
     { "nickname":"fc_6", 
       "functions":[{ "type":"fc", 
-                     "output_size":2048
+                     "output_size":2048,
+                     "init":"trunc_norm",
+                     "bias":0.1
                    },
                    { "type":"relu"
                    }
@@ -104,7 +106,9 @@
     },
     { "nickname":"fc_7", 
       "functions":[{ "type":"fc", 
-                     "output_size":2048
+                     "output_size":2048,
+                     "init":"trunc_norm",
+                     "bias":0.1
                    },
                    { "type":"relu"
                    }
@@ -113,7 +117,9 @@
     },
     { "nickname":"fc_8", 
       "functions":[{ "type":"fc", 
-                     "output_size":1000
+                     "output_size":1000,
+                     "init":"trunc_norm",
+                     "bias":0.0
                    }
                   ],
       "type":"cell"
