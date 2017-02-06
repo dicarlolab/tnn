@@ -166,6 +166,7 @@ params = {
     },
 
     'log_device_placement': False,  # if variable placement has to be logged
+    'allow_memory_growth': True,
 }
 
 
