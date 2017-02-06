@@ -146,10 +146,10 @@ def calc_size_after(input_size, function_):
                                  / float(function_['stride'])))
         elif function_['padding'] == 'valid':
             out_height = int(ceil(float(input_size[1]
-                                        - function_['filter_size'][0] + 1)
+                                        - function_['filter_size'] + 1)
                                   / float(function_['stride'])))
             out_width = int(ceil(float(input_size[2]
-                                       - function_['filter_size'][1] + 1)
+                                       - function_['filter_size'] + 1)
                                  / float(function_['stride'])))
         return [input_size[0], out_height, out_width, function_['num_filters']]
 
