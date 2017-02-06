@@ -11,7 +11,6 @@ Let's begin.
 import pathmagic
 import train_mnist
 import unicycle
-import numpy as np
 
 
 class TestBasicTraining:

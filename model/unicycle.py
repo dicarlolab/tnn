@@ -206,7 +206,7 @@ def mnist_tfutils(inputs, **kwargs):
     """
     m = Unicycle()
     o = m.build_and_output(inputs,
-                           json_file_name='sample_alexnet.json',
+                           json_file_name='sample_mnist.json',
                            **kwargs)
     return o.get_state(), {'input': 'image_input_1',
                            'type': 'lrnorm',
