@@ -951,7 +951,8 @@ def train_from_params(save_params,
                   'learning_rate_params': learning_rate_params,
                   'optimizer_params': optimizer_params,
                   'validation_params': validation_params,
-                  'log_device_placement': log_device_placement}
+                  'log_device_placement': log_device_placement,
+                  'allow_memory_growth': allow_memory_growth}
         dbinterface = DBInterface(sess=sess, global_step=global_step, params=params,
                                   save_params=save_params, load_params=load_params)
         dbinterface.initialize()
