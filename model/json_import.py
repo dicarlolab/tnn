@@ -17,7 +17,7 @@ from dbgr import dbgr_silent
 import argparse
 
 
-def json_import(filename='sample_alexnet.json', dbgr=dbgr_silent):
+def json_import(filename=None, dbgr=dbgr_silent):
     # parser = argparse.ArgumentParser()
     # parser.add_argument('-f', '--file', default='sample_mnist.json', type=str)
     # args = vars(parser.parse_args())
