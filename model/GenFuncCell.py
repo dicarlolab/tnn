@@ -234,7 +234,6 @@ class GenFuncCell(RNNCell):
              init=tf.contrib.layers.initializers.xavier_initializer(),
              stddev=.01,
              bias=0,
-             weight_decay=0,
              name=''):
         in_shape = in_layer.get_shape().as_list()[-1]
 
@@ -248,7 +247,6 @@ class GenFuncCell(RNNCell):
             initializer=init,
             shape=[ksize1, ksize2, in_shape, out_shape],
             dtype=tf.float32,
-            regularizer=tf.contrib.layers.l2_regularizer(weight_decay),
             name='filter_tensor_%s' % (name))
         conv = tf.nn.conv2d(in_layer,
                             kernel,
