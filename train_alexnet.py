@@ -72,7 +72,7 @@ params = {
         'save_valid_freq': 3000,
         'save_filters_freq': 30000,
         'cache_filters_freq': 3000,
-        'cache_dir': /mnt/data/askharry/tconvnet_data,  # defaults to '~/.tfutils'
+        'cache_dir': '/mnt/data/askharry/tconvnet_data',  # defaults to '~/.tfutils'
     },
 
     'load_params': {
