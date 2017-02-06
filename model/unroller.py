@@ -23,6 +23,7 @@ def unroller_call(input_sequence, G, last=None):
                 # For now every input cell gets the same image as the output
                 # for every time step
                 G.node[node]['tf_cell'].update_outputs(input_sequence['images'])
+                G.node[node]['tf_cell'].update_outputs(input_sequence['images'])
             else:
                 inputs = {p: G.node[p]['tf_cell'].get_output(1) for p in preds}
                 # Compute output and state
