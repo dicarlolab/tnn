@@ -197,6 +197,25 @@ def unicycle_tfutils(inputs, **kwargs):
                            'beta': 0.00001111}
 
 
+def mnist_tfutils(inputs, **kwargs):
+    """
+    This function is specific to MNIST (JSON file in build_and_output params
+    below).
+    We initialize the Unicycle graph with the AlexNet architecture, then we
+    push the `inputs` through and receive the state of the output node
+    """
+    m = Unicycle()
+    o = m.build_and_output(inputs,
+                           json_file_name='sample_alexnet.json',
+                           **kwargs)
+    return o.get_state(), {'input': 'image_input_1',
+                           'type': 'lrnorm',
+                           'depth_radius': 4,
+                           'bias': 1,
+                           'alpha': 0.0001111,
+                           'beta': 0.00001111}
+
+
 def alexnet_tfutils(inputs, **kwargs):
     """
     This function is specific to AlexNet (JSON file in build_and_output params
