@@ -225,8 +225,8 @@ class Policy(object):
                              key=lambda x: max(len(t) for t in x[1]))[1][0]
             return long_shape
         else:
-            # Get the batch size
-            input_shape = input_tensor.get_shape().as_list()[0]
+            # Get the input shape
+            input_shape = input_tensor.get_shape().as_list()
 
             # If the number of dimensions in the input_shape is like an image:
             if len(input_shape) == 4:
