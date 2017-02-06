@@ -209,7 +209,7 @@ def fetch_node(nickname='no_nickname_given', graph=None, **kwargs):
     return matching
 
 
-def initializer(self, kind='xavier', stddev=.01, seed=None):
+def initializer(kind='xavier', stddev=.01, seed=None):
     if kind == 'xavier':
         init = tf.contrib.layers.initializers.xavier_initializer(
             seed=seed if seed else randint(1, 1000))
