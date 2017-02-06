@@ -105,7 +105,7 @@ params = {
             'n_threads': 4,
             'seed': 0,
         },
-        'thres_loss': 10000,
+        'thres_loss': 10000000000000000000000,
         'num_steps': 90 * NUM_BATCHES_PER_EPOCH  # number of steps to train
     },
 
@@ -156,6 +156,7 @@ params = {
     },
 
     'log_device_placement': False,  # if variable placement has to be logged
+    'allow_memory_growth': True,
 }
 
 

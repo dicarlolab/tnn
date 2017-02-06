@@ -272,7 +272,7 @@ class DBInterface(object):
                 tf_saver.restore(self.sess, cache_filename)
                 log.info('... done restoring.')
         if not self.do_restore or self.load_data is None:
-            init = tf.global_variables_initializer()
+            init = tf.initialize_all_variables()
             self.sess.run(init)
             log.info('Model variables initialized from scratch.')
 
@@ -752,6 +752,7 @@ def train_from_params(save_params,
                       optimizer_params=None,
                       validation_params=None,
                       log_device_placement=False,
+                      allow_memory_growth=False,
                       load_params=None
                       ):
     """
@@ -937,8 +938,10 @@ def train_from_params(save_params,
         queues.extend(vqueues)
 
         # create session
-        sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True,
-                                                log_device_placement=log_device_placement))
+        config = tf.ConfigProto(allow_soft_placement=True,
+                                log_device_placement=log_device_placement)
+        config.gpu_options.allow_growth = allow_memory_growth
+        sess = tf.Session(config=config)
 
         params = {'save_params': save_params,
                   'load_params': load_params,
