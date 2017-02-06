@@ -732,8 +732,8 @@ def train(sess,
         if step <= old_step:
             raise NoChangeError('Your optimizer should have incremented the global step,'
                                 ' but did not: old_step=%d, new_step=%d' % (old_step, step))
-        if train_results['loss'] > thres_loss:
-            raise HiLossError('Loss {:.2f} exceeded the threshold {:.2f}'.format(train_results['loss'], thres_loss))
+        # if train_results['loss'] > thres_loss:
+        #     raise HiLossError('Loss {:.2f} exceeded the threshold {:.2f}'.format(train_results['loss'], thres_loss))
 
         vtargs = validation_targets if step % dbinterface.save_valid_freq == 0 else {}
         validation_res = run_targets_dict(sess, vtargs)
