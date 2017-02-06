@@ -173,16 +173,17 @@ class GenFuncCell(RNNCell):
 
             return new_output, new_state
 
-    def get_state(self, t=1):
-        # Return the topmost state or -t_th state (1 is current, 2 is previous)
+    def get_state(self, t=0):
+        # Return the topmost state or -t_th state (0 is current, 1 is previous)
         if t > len(self.states):
             raise Exception('GenFuncCell trying to access nonexistent state')
         return self.states[-t]
 
-    def get_output(self, t=1):
-        # Return the topmost state or -t_th state (1 is current, 2 is previous)
+    def get_output(self, t=0):
+        # Return the topmost state or -t_th state (0 is current, 1 is previous)
         if t > len(self.outputs):
-            raise Exception('GenFuncCell trying to access nonexistent output')
+            # raise Exception('GenFuncCell trying to access nonexistent output')
+            return self.zero_state()
         return self.outputs[-t]
 
     def update_states(self, new):
