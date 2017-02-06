@@ -41,8 +41,10 @@ def init_root_node_size_and_harbor(G,
             + i['functions'][0]['output_size']
         G.node[this_name]['state_size'] = G.node[this_name]['output_size'][:]
         # Create a Harbor instance
-        G.node[this_name]['harbor'] = \
-            Harbor({this_name: (G.node[this_name]['output_size'], [])})
+        G.node[this_name]['harbor'] = Harbor(
+            incoming_sizes={this_name: (G.node[this_name]['output_size'], [])},
+            node_name=this_name
+        )
         # G.node[this_name]['harbor'] = Harbor_Dummy(
         #     G.node[this_name]['output_size'],
         #     input_=not bias)

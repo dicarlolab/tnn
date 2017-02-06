@@ -197,11 +197,11 @@ class Policy(object):
         """
 
         # By default this is the long_choice_final_tensor function:
-        return self.long_choice_final_tensor(incoming_sizes=None,
-                                             input_nickname=None,
-                                             input_tensor=None,
-                                             desired_size=None,
-                                             return_desired_size=False,
+        return self.long_choice_final_tensor(incoming_sizes,
+                                             input_nickname,
+                                             input_tensor,
+                                             desired_size,
+                                             return_desired_size,
                                              **kwargs)
 
     def long_choice_final_tensor(self,
