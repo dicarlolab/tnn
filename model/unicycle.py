@@ -174,10 +174,10 @@ class Unicycle(object):
     def build_and_output(self,
                          inputs=[],
                          json_file_name=None,
-                         training=False,
+                         train=False,
                          **kwargs):
         G = self.build(json_file_name=json_file_name,
-                       training=training)
+                       train=train)
         last_ = self(inputs, G)
         return last_
 
