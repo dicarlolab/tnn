@@ -139,7 +139,6 @@ def assemble_function_kwargs(functions, input_size, nickname, train=False):
 
 
 def calc_size_after(input_size, function_):
-    print input_size
     if function_['type'] == 'conv':
         if function_['padding'] == 'same':
             out_height = int(ceil(float(input_size[1])

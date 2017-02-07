@@ -2,7 +2,7 @@ from dbgr import dbgr_silent
 from unicycle_settings import BATCH_SIZE
 from utility_functions import fetch_node
 import utility_functions
-from harbor import Harbor, Harbor_Dummy, Policy
+from harbor import Harbor, Policy
 from itertools import chain
 import networkx as nx
 
@@ -89,7 +89,7 @@ def all_node_size_find(G,
             else:
                 if all(['output_size' in G.node[i]
                         for i in get_forward_pred(G, node)]):
-                    dbgr('Counting up the sizes for node %s' % (node), 1)
+                    dbgr('Counting up the sizes for node %s' % (node))
                     # All the predecessors have been traversed, we can now
                     # proceed
 
@@ -108,12 +108,12 @@ def all_node_size_find(G,
 
                     dbgr('Incoming sizes of %s: %s' % (node, incoming_sizes))
 
-                    # Create a Policy instance
-                    current_policy = Policy()
+                    # # Create a Policy instance
+                    # current_policy = Policy()
 
                     # Create a Harbor instance
                     G.node[node]['harbor'] = Harbor(incoming_sizes,
-                                                    policy=current_policy,
+                                                    policy=None,
                                                     node_name=node)
 
                     # Extract the desired_size from Harbor:

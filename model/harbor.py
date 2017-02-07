@@ -33,7 +33,8 @@ class Harbor(object):
 
         # Policy is a function-carrying object that performs some set of
         # actions on the input
-        self.policy = policy if policy else Policy(**policy_kwargs)
+        self.policy = policy if policy else Policy(name=node_name,
+                                                   **policy_kwargs)
 
         # ====== GET SETUP PARAMS FROM POLICY: ===============================
 
@@ -140,7 +141,8 @@ class Policy(object):
                  shape_select='long',
                  combination_type='concat',
                  tensor_calculate_func=None,
-                 tf_node_func=None):
+                 tf_node_func=None,
+                 name=''):
         # The characteristic of the shape to be selected and all input to
         # be resized to:
         #   long    -> longest path,
@@ -159,6 +161,8 @@ class Policy(object):
         # The final size to resize to based on shape_select from above:
         self.tensor_calculate_func = tensor_calculate_func if \
             tensor_calculate_func else self.choice_final_tensor
+
+        self.name = name
 
     def choice_final_tensor(self,
                             incoming_sizes=None,
@@ -257,12 +261,12 @@ class Policy(object):
                                           ksize=ksize,
                                           strides=strides,
                                           padding='VALID',
-                                          name=self.scope()
+                                          name=self.name
                                           + '_' + input_nickname
                                           + '_harbor_maxpool')
 
                     print '  >> Harbor Policy of %s - resizing %s, want %s and got %s' % \
-                        (self.scope(),
+                        (self.name,
                          input_nickname,
                          desired_size,
                          pool.get_shape().as_list())
