@@ -227,8 +227,9 @@ class GenFuncCell(RNNCell):
                                name='fc_bias_%s' % (self._scope))
         if dropout:
             droplayer = tf.nn.dropout(mulss, dropout)
+            return droplayer
 
-        return droplayer
+        return mulss
 
     def conv(self,
              in_layer,
