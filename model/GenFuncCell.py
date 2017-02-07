@@ -209,7 +209,7 @@ class GenFuncCell(RNNCell):
         new = tf.mul(state, decay_factor) + in_layer
         return new
 
-    def fc(self, input_, output_size, init, bias=1):
+    def fc(self, input_, output_size, init, bias=1, dropout=0):
         # Move everything into depth so we can perform a single matrix mult.
         batch_size = input_.get_shape()[0].value
         reshape = tf.reshape(input_, [batch_size, -1])
@@ -222,8 +222,13 @@ class GenFuncCell(RNNCell):
             'biases_%s' % (self._scope),
             shape=[output_size],
             initializer=tf.constant_initializer(0.1))
-        mulss = tf.nn.relu(tf.matmul(reshape, weights) + biases)
-        return mulss
+        mulss = tf.nn.bias_add(tf.matmul(reshape, weights),
+                               biases,
+                               name='fc_bias_%s' % (self.scope))
+        if dropout:
+            droplayer = tf.nn.dropout(mulss, dropout)
+
+        return droplayer
 
     def conv(self,
              in_layer,
@@ -252,12 +257,12 @@ class GenFuncCell(RNNCell):
                             kernel,
                             strides=[1, stride, stride, 1],
                             padding=padding)
-        if bias:
-            biases = tf.get_variable(initializer=tf.constant_initializer(bias),
-                                     shape=[out_shape],
-                                     dtype=tf.float32,
-                                     name='conv_bias_%s' % (name))
-            conv = tf.nn.bias_add(conv, biases)
+
+        biases = tf.get_variable(initializer=tf.constant_initializer(bias),
+                                 shape=[out_shape],
+                                 dtype=tf.float32,
+                                 name='conv_bias_%s' % (name))
+        conv = tf.nn.bias_add(conv, biases)
 
         return conv
 

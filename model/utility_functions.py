@@ -84,7 +84,7 @@ def create_kwargs_norm(fn, input_size, name):
     return out_dict, calc_size_after(input_size, fn)
 
 
-def create_kwargs_fc(fn, input_size):
+def create_kwargs_fc(fn, input_size, train=False):
     # This function takes the abstract JSON representation and prepares the
     # correct function-ready kwarg collection
     out_dict = {}
@@ -99,6 +99,8 @@ def create_kwargs_fc(fn, input_size):
     out_dict['init'] = init
     if 'bias' in fn:
         out_dict['bias'] = fn['bias']
+    out_dict['dropout'] = 0.5 if train else 0
+
     return out_dict, calc_size_after(input_size, fn)
 
 
@@ -114,7 +116,7 @@ def create_kwargs_ph(fn, input_size):
     return out_dict, calc_size_after(input_size, fn)
 
 
-def assemble_function_kwargs(functions, input_size, nickname):
+def assemble_function_kwargs(functions, input_size, nickname, train=False):
     to_be_passed_in_state_kwargs = []
     cur_size = input_size[:]
     for f in functions:
@@ -129,7 +131,7 @@ def assemble_function_kwargs(functions, input_size, nickname):
         elif f_type == 'norm':
             temp_kwarg, cur_size = create_kwargs_norm(f, cur_size, nickname)
         elif f_type == 'fc':
-            temp_kwarg, cur_size = create_kwargs_fc(f, cur_size)
+            temp_kwarg, cur_size = create_kwargs_fc(f, cur_size, train)
         elif f_type == 'placeholder':
             temp_kwarg, cur_size = create_kwargs_ph(f, input_size)
         to_be_passed_in_state_kwargs.append(temp_kwarg)

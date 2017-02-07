@@ -32,7 +32,7 @@ class Unicycle(object):
     def __init__(self):
         print 'Unicycle Initialized'
 
-    def build(self, json_file_name=None, dbgr=dbgr):
+    def build(self, json_file_name=None, dbgr=dbgr, train=False):
         """
         The main build routine for the Universal Neural
         Interpretation and Cyclicity Engine (UNICYCLE)
@@ -138,7 +138,7 @@ class Unicycle(object):
         dbgr('======\nSTEP 4\n TF Node Creation\n========================')
 
         # Initialize all the nodes:
-        G = initialize_nodes(G)
+        G = initialize_nodes(G, train=train)
 
         # Emotional support
         dbgr(imgs.centaur())
@@ -171,8 +171,13 @@ class Unicycle(object):
 
         return last
 
-    def build_and_output(self, inputs=[], json_file_name=None, **kwargs):
-        G = self.build(json_file_name=json_file_name)
+    def build_and_output(self,
+                         inputs=[],
+                         json_file_name=None,
+                         training=False,
+                         **kwargs):
+        G = self.build(json_file_name=json_file_name,
+                       training=training)
         last_ = self(inputs, G)
         return last_
 

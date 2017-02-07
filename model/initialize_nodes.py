@@ -2,7 +2,7 @@ from utility_functions import fetch_node, assemble_function_kwargs
 from GenFuncCell import GenFuncCell
 
 
-def initialize_nodes(G, fetch_func=fetch_node):
+def initialize_nodes(G, fetch_func=fetch_node, train=False):
 
     for i in G.graph['input_touch_order']:
         current_info = fetch_func(i, graph=G)[0]
@@ -26,7 +26,8 @@ def initialize_nodes(G, fetch_func=fetch_node):
 
         sfk = assemble_function_kwargs(current_info['functions'],
                                        G.node[node]['harbor'].desired_size,
-                                       node)
+                                       node,
+                                       train=train)
 
         # Let's initiate TF Node:
         tf_node = GenFuncCell(harbor=G.node[node]['harbor'],
