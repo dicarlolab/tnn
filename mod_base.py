@@ -964,6 +964,9 @@ def train_from_params(save_params,
                     num_steps=train_params['num_steps'],
                     thres_loss=train_params['thres_loss'],
                     validation_targets=valid_targets_dict)
+        # create log writer object
+
+        writer = tf.train.SummaryWriter('tensorboard/logs', graph=tf.get_default_graph())
         sess.close()
         return res
 
