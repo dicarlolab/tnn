@@ -224,7 +224,7 @@ class GenFuncCell(RNNCell):
             initializer=tf.constant_initializer(0.1))
         mulss = tf.nn.bias_add(tf.matmul(reshape, weights),
                                biases,
-                               name='fc_bias_%s' % (self.scope))
+                               name='fc_bias_%s' % (self._scope))
         if dropout:
             droplayer = tf.nn.dropout(mulss, dropout)
 
