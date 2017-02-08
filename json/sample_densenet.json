@@ -1016,7 +1016,7 @@
       "functions":[{ "type":"maxpool",
                      "k_size":7,
                      "stride":7,
-                     "padding":"valid"
+                     "padding":"same"
                    },
                    { "type":"fc", 
                      "output_size":1000,

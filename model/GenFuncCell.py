@@ -177,14 +177,14 @@ class GenFuncCell(RNNCell):
         # Return the topmost state or -t_th state (0 is current, 1 is previous)
         if t > len(self.states) - 1:
             raise Exception('GenFuncCell trying to access nonexistent state')
-        return self.states[-t-1]
+        return self.states[-t - 1]
 
     def get_output(self, t=0):
         # Return the topmost state or -t_th state (0 is current, 1 is previous)
         if t > len(self.outputs) - 1:
-            # raise Exception('GenFuncCell trying to access nonexistent output')
+            # raise Exception('GenFuncCell accessing nonexistent output')
             return self.zero_state()
-        return self.outputs[-t-1]
+        return self.outputs[-t - 1]
 
     def update_states(self, new):
         self.states.append(new)
@@ -205,9 +205,13 @@ class GenFuncCell(RNNCell):
                               name='decay_param_%s' % (self._scope))
         print('    %s MEMORY CALLED! Decay param name: %s' % (
             self._scope, mem.name))
-        decay_factor = tf.sigmoid(mem)
-        new = tf.mul(state, decay_factor) + in_layer
-        return new
+        # decay_factor = tf.sigmoid(mem)
+        # new = tf.mul(state, decay_factor) + in_layer
+        if trainable or memory_decay > 0:
+            new = tf.mul(state, mem) + in_layer
+            return new
+        else:
+            return in_layer
 
     def fc(self, input_, output_size, init, bias=1, dropout=0):
         # Move everything into depth so we can perform a single matrix mult.
