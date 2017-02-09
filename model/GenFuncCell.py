@@ -207,11 +207,8 @@ class GenFuncCell(RNNCell):
             self._scope, mem.name))
         # decay_factor = tf.sigmoid(mem)
         # new = tf.mul(state, decay_factor) + in_layer
-        if trainable or memory_decay > 0:
-            new = tf.mul(state, mem) + in_layer
-            return new
-        else:
-            return in_layer
+        new = tf.mul(state, mem) + in_layer
+        return new
 
     def fc(self, input_, output_size, init, bias=1, dropout=0):
         # Move everything into depth so we can perform a single matrix mult.
