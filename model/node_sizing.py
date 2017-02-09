@@ -1,5 +1,4 @@
 from dbgr import dbgr_silent
-from unicycle_settings import BATCH_SIZE
 from utility_functions import fetch_node
 import utility_functions
 from harbor import Harbor, Policy
@@ -32,12 +31,13 @@ def init_root_node_size_and_harbor(G,
     # Then, add to node_touch for proper ordering
     for i in input_nodes:
         this_name = i['nickname']
+        batch_size = G.node[this_name]['batch_size']
         assert 'functions' in i, 'Input node %s has no functions!' % \
             (this_name)
         assert 'output_size' in i['functions'][0], 'Input node %s has no \
             output size specified!' % (this_name)
         # [batch, height, width, channels], batch is usually set to None
-        G.node[this_name]['output_size'] = [BATCH_SIZE] \
+        G.node[this_name]['output_size'] = [batch_size] \
             + i['functions'][0]['output_size']
         G.node[this_name]['state_size'] = G.node[this_name]['output_size'][:]
         # Create a Harbor instance
