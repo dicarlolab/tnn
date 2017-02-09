@@ -101,7 +101,10 @@ class Harbor(object):
         # Now we're working outside of the individual input resizing loop
         # Let's combine all the inputs together:
         if self.combination_type == 'concat':
-            # If image:
+            # If first input is an image:
+            print ' Harbor post-policy inputs:'
+            for i in big_input_list:
+                print ' +- ', i
             if len(big_input_list[0].get_shape().as_list()) == 4:
                 out = tf.concat(3, big_input_list, name=self.name +
                                 '_harbor_concat')
