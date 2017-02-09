@@ -130,8 +130,9 @@ class GenFuncCell(RNNCell):
                 # The current function's args passed in (cur_f_args is a dict),
                 # everything here has been prepared outside of the Cell
                 if 'name' in self._state_fs_kwargs[f]:
-                    self._state_fs_kwargs[f]['name'] += '_f%s' % (f)
-                    print('-->', self._state_fs_kwargs[f]['name'])
+                    if '__f' not in self._state_fs_kwargs[f]['name']:
+                        self._state_fs_kwargs[f]['name'] += '__f%s' % (f)
+                        print('-->', self._state_fs_kwargs[f]['name'])
                 cur_f_args = self._state_fs_kwargs[f]
                 # Plug in the input and open up the kwargs into the arguments
                 # of the current function, and collect the output
