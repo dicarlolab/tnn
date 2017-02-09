@@ -54,7 +54,7 @@ def exponential_decay(global_step,
     return lr
 
 
-BATCH_SIZE = 256
+BATCH_SIZE = 64
 NUM_BATCHES_PER_EPOCH = data.ImageNet.N_TRAIN // BATCH_SIZE
 IMAGE_SIZE_CROP = 224
 
