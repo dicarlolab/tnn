@@ -131,29 +131,29 @@ params = {
         'momentum': .9
     },
 
-    # 'validation_params': {
-    #     'topn': {
-    #         'data_params': {
-    #             'func': data.ImageNet,
-    #             'data_path': DATA_PATH,  # path to image database
-    #             'group': 'val',
-    #             'crop_size': IMAGE_SIZE_CROP,  # size after cropping an image
-    #         },
-    #         'targets': {
-    #             'func': in_top_k,
-    #             'target': 'labels',
-    #         },
-    #         'queue_params': {
-    #             'queue_type': 'fifo',
-    #             'batch_size': BATCH_SIZE,
-    #             'n_threads': 4,
-    #             'seed': 0,
-    #         },
-    #         'num_steps': data.ImageNet.N_VAL // BATCH_SIZE + 1,
-    #         'agg_func': lambda x: {k: np.mean(v) for k, v in x.items()},
-    #         'online_agg_func': online_agg
-    #     },
-    # },
+    'validation_params': {
+        'topn': {
+            'data_params': {
+                'func': data.ImageNet,
+                'data_path': DATA_PATH,  # path to image database
+                'group': 'val',
+                'crop_size': IMAGE_SIZE_CROP,  # size after cropping an image
+            },
+            'targets': {
+                'func': in_top_k,
+                'target': 'labels',
+            },
+            'queue_params': {
+                'queue_type': 'fifo',
+                'batch_size': BATCH_SIZE,
+                'n_threads': 4,
+                'seed': 0,
+            },
+            'num_steps': data.ImageNet.N_VAL // BATCH_SIZE + 1,
+            'agg_func': lambda x: {k: np.mean(v) for k, v in x.items()},
+            'online_agg_func': online_agg
+        },
+    },
 
     'log_device_placement': False,  # if variable placement has to be logged
     'allow_memory_growth': True,
