@@ -239,8 +239,8 @@ def mnist_benchmark(inputs, **kwargs):
     NUM_LABELS = 10
     SEED = 66478  # Set to None for random seed.
 
-    input_shape = inputs.get_shape().as_list()
-    inputs = tf.reshape(inputs, [input_shape[0], input_shape[2]**0.5, input_shape[2]**0.5, NUM_CHANNELS])
+    input_shape = inputs['images'].get_shape().as_list()
+    inputs = tf.reshape(inputs['images'], [input_shape[0], input_shape[2]**0.5, input_shape[2]**0.5, NUM_CHANNELS])
 
     BATCH_SIZE = input_shape[0]
 
