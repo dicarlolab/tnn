@@ -85,7 +85,7 @@ params = {
         'save_valid_freq': 300,
         'save_filters_freq': 3000,
         'cache_filters_freq': 3000,
-        # 'cache_dir': None,  # defaults to '~/.tfutils'
+        'cache_dir': '/mnt/data/askharry/tconvnet_data',  # defaults to '~/.tfutils'
     },
 
     'load_params': {
@@ -179,4 +179,4 @@ def main(custom_step_limit=None):
 
 
 if __name__ == '__main__':
-    main(3000)
+    main(10000)
