@@ -251,6 +251,7 @@ class Policy(object):
                                                              int((input_shape[2])**0.5),
                                                              input_shape[1]],
                                               name='reshape_to_4')
+                    input_shape = input_tensor.get_shape().as_list()
 
                 # If the shape of the current input is the desired shape, pass:
                 if input_shape == desired_size:
