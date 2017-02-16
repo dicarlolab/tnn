@@ -230,6 +230,11 @@ class Policy(object):
             # Find the shape size of the input with the longest path:
             long_shape = max(incoming_sizes.items(),
                              key=lambda x: max(len(t) for t in x[1]))[1][0]
+            if len(long_shape) == 3:
+                long_shape = [long_shape[0],
+                              int((long_shape[2])**0.5),
+                              int((long_shape[2])**0.5),
+                              long_shape[1]]
             return long_shape
         else:
             # Get the input shape
