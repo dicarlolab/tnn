@@ -246,7 +246,10 @@ class GenFuncCell(RNNCell):
              stddev=.01,
              bias=0,
              name=''):
-        in_shape = in_layer.get_shape().as_list()[-1]
+        if in_layer.get_shape().as_list()[-1] == 784:
+            in_shape = 1
+        else:
+            in_shape = in_layer.get_shape().as_list()[-1]
 
         if isinstance(ksize, int):
             ksize1 = ksize
