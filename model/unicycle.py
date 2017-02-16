@@ -254,7 +254,7 @@ def mnist_benchmark(inputs, **kwargs):
         seed=SEED, dtype=tf.float32))
     conv2_biases = tf.Variable(tf.constant(0.1, shape=[64], dtype=tf.float32))
     fc1_weights = tf.Variable(  # fully connected, depth 512.
-        tf.truncated_normal([IMAGE_SIZE // 4 * IMAGE_SIZE // 4 * BATCH_SIZE * NUM_CHANNELS, 512],
+        tf.truncated_normal([IMAGE_SIZE // 4 * IMAGE_SIZE // 4 * 64, 512],
                           stddev=0.1,
                           seed=SEED,
                           dtype=tf.float32))
