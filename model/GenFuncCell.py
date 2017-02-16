@@ -254,7 +254,7 @@ class GenFuncCell(RNNCell):
                                              int((input_shape[1])**0.5),
                                              1])
 
-        in_shape = input_shape[-1]
+        in_shape = in_layer.get_shape().as_list()[-1]
 
         if isinstance(ksize, int):
             ksize1 = ksize
