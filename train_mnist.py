@@ -179,4 +179,4 @@ def main(custom_step_limit=None):
 
 
 if __name__ == '__main__':
-    main()
+    main(3000)

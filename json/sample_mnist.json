@@ -9,8 +9,11 @@
       "type":"placeholder" 
     }, 
     { "nickname":"hidden_1", 
-      "functions":[{ "type":"fc", 
-                     "output_size":128
+      "functions":[{ "type":"conv",
+		     "filter_size":3,
+		     "num_filters":16,
+		     "stride":1,
+		     "padding":"valid"
                    },
                    { "type":"relu"
                    }
@@ -19,7 +22,7 @@
     },
     { "nickname":"hidden_2", 
       "functions":[{ "type":"fc", 
-                     "output_size":32
+                     "output_size":100
                    },
                    { "type":"relu"
                    }
