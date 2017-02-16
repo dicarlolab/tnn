@@ -247,13 +247,14 @@ class GenFuncCell(RNNCell):
              bias=0,
              name=''):
         input_shape = in_layer.get_shape().as_list()
-        in_shape = input_shape[-1]
 
         if len(in_layer.get_shape().as_list()) == 2:
             in_layer = tf.reshape(in_layer, [input_shape[0],
                                              int((input_shape[1])**0.5),
                                              int((input_shape[1])**0.5),
                                              1])
+
+        in_shape = input_shape[-1]
 
         if isinstance(ksize, int):
             ksize1 = ksize
