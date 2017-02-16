@@ -246,13 +246,18 @@ class GenFuncCell(RNNCell):
              stddev=.01,
              bias=0,
              name=''):
-        in_shape = in_layer.get_shape().as_list()[-1]
+        input_shape = in_layer.get_shape().as_list()
+        in_shape = input_shape[-1]
 
-        print(in_layer.get_shape().as_list(), 'CONV SHAPE')
+        if len(in_layer.get_shape().as_list()) == 2:
+            in_layer = tf.reshape(in_layer, [input_shape[0],
+                                             int((input_shape[1])**0.5),
+                                             int((input_shape[1])**0.5),
+                                             1])
 
         if isinstance(ksize, int):
             ksize1 = ksize
-            ksize2 = ksize
+            ksize2 = ksizeg
         else:
             ksize1, ksize2 = ksize
 
