@@ -257,7 +257,7 @@ class GenFuncCell(RNNCell):
 
         if isinstance(ksize, int):
             ksize1 = ksize
-            ksize2 = ksizeg
+            ksize2 = ksize
         else:
             ksize1, ksize2 = ksize
 
