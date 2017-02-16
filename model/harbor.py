@@ -236,10 +236,20 @@ class Policy(object):
             input_shape = input_tensor.get_shape().as_list()
 
             # If the number of dimensions in the input_shape is like an image:
-            if len(input_shape) == 4:
+            if len(input_shape) > 2:
+
                 # If the shape of the current input is the desired shape, pass:
                 if input_shape == desired_size:
                     return input_tensor
+
+                # If the number of dimensions in the input_shape is like an image:
+                if len(input_shape) == 3:
+                    # Reshape to 4:
+                    input_tensor = tf.reshape(input_tensor, [input_shape[0],
+                                                             (input_shape[2])**0.5,
+                                                             (input_shape[2])**0.5,
+                                                             input_shape[1]],
+                                              name='reshape_to_4')
 
                 # If the shape of the current input is more than the desired
                 # size, we pool down
