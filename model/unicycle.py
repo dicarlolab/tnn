@@ -240,9 +240,14 @@ def mnist_benchmark(inputs, **kwargs):
     SEED = 66478  # Set to None for random seed.
 
     input_shape = inputs['images'].get_shape().as_list()
-    inputs = tf.reshape(inputs['images'], [input_shape[0], int(input_shape[2]**0.5), int(input_shape[2]**0.5), NUM_CHANNELS])
+    print input_shape
+    if len(input_shape)==3:
+    	inputs = tf.reshape(inputs['images'], [input_shape[0], int(input_shape[2]**0.5), int(input_shape[2]**0.5), NUM_CHANNELS])
+    else:
+        inputs = tf.reshape(inputs['images'], [input_shape[0], int(input_shape[1]**0.5), int(input_shape[1]**0.5), 1])
 
     BATCH_SIZE = input_shape[0]
+    input_shape = inputs.get_shape().as_list()
 
     conv1_weights = tf.Variable(
         tf.truncated_normal([5, 5, NUM_CHANNELS, 32],  # 5x5 filter, depth 32.
