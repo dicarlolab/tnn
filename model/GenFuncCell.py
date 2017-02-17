@@ -104,78 +104,78 @@ class GenFuncCell(RNNCell):
         self._scope = type(self).__name__ if scope is None else scope
 
     def __call__(self, input_, curstate):
-        with tf.variable_scope(self._scope):
-            print('GenFuncCell call of node %s' % (self._scope))
+        # with tf.variable_scope(self._scope):
+        print('GenFuncCell call of node %s' % (self._scope))
 
-            # Check to see if input node:
-            if len(input_) == 0:
-                state = self.get_state()
-                print()
-                return state, state
+        # Check to see if input node:
+        if len(input_) == 0:
+            state = self.get_state()
+            print()
+            return state, state
 
-            # Input is a dict {'nickname':Tensor}
-            prev = self.harbor(input_)
+        # Input is a dict {'nickname':Tensor}
+        prev = self.harbor(input_)
 
-            print('  Using Harbor output:', prev)
-            print('  GenFuncCell of node %s >>  post-Harbor size %s' % (
-                self._scope,
-                prev.get_shape().as_list())
-            )
+        print('  Using Harbor output:', prev)
+        print('  GenFuncCell of node %s >>  post-Harbor size %s' % (
+            self._scope,
+            prev.get_shape().as_list())
+        )
 
-            # Each before-the-memory function, when run, will update the prev
-            # value and pass that to the next function
-            for f in range(len(self._state_fs)):
-                # The current function we're working with
-                cur_f = self._state_fs[f]
-                # The current function's args passed in (cur_f_args is a dict),
-                # everything here has been prepared outside of the Cell
-                if 'name' in self._state_fs_kwargs[f]:
-                    if '__f' not in self._state_fs_kwargs[f]['name']:
-                        self._state_fs_kwargs[f]['name'] += '__f%s' % (f)
-                        print('-->', self._state_fs_kwargs[f]['name'])
-                cur_f_args = self._state_fs_kwargs[f]
-                # Plug in the input and open up the kwargs into the arguments
-                # of the current function, and collect the output
-                prev = cur_f(prev, **cur_f_args)
+        # Each before-the-memory function, when run, will update the prev
+        # value and pass that to the next function
+        for f in range(len(self._state_fs)):
+            # The current function we're working with
+            cur_f = self._state_fs[f]
+            # The current function's args passed in (cur_f_args is a dict),
+            # everything here has been prepared outside of the Cell
+            if 'name' in self._state_fs_kwargs[f]:
+                if '__f' not in self._state_fs_kwargs[f]['name']:
+                    self._state_fs_kwargs[f]['name'] += '__f%s' % (f)
+                    print('-->', self._state_fs_kwargs[f]['name'])
+            cur_f_args = self._state_fs_kwargs[f]
+            # Plug in the input and open up the kwargs into the arguments
+            # of the current function, and collect the output
+            prev = cur_f(prev, **cur_f_args)
 
-            print('  GenFuncCell of node %s >>  post-state size %s' % (
-                self._scope,
-                prev.get_shape().as_list())
-            )
+        print('  GenFuncCell of node %s >>  post-state size %s' % (
+            self._scope,
+            prev.get_shape().as_list())
+        )
 
-            print('  GenFuncCell of node %s >>  pre-memory state size %s' % (
-                self._scope,
-                self.get_state().get_shape().as_list())
-            )
-            # Now, we update the memory!
-            new_state = self.memory(state=curstate,
-                                    in_layer=prev,
-                                    **self._memory_kwargs)
+        print('  GenFuncCell of node %s >>  pre-memory state size %s' % (
+            self._scope,
+            self.get_state().get_shape().as_list())
+        )
+        # Now, we update the memory!
+        new_state = self.memory(state=curstate,
+                                in_layer=prev,
+                                **self._memory_kwargs)
 
-            print('  GenFuncCell of node %s >>  post-memory state size %s' % (
-                self._scope,
-                new_state.get_shape().as_list())
-            )
+        print('  GenFuncCell of node %s >>  post-memory state size %s' % (
+            self._scope,
+            new_state.get_shape().as_list())
+        )
 
-            new_output = new_state
-            # Each after-the-memory function, when run, will update the
-            # self.output value and pass that to the next function
-            for f in range(len(self._out_fs)):
-                # The current function we're working with
-                cur_f = self._out_fs[f]
-                # The current function's args passed in (cur_f_args is a dict),
-                # everything here has been prepared outside of the Cell
-                cur_f_args = self._out_fs_kwargs[f]
-                # Plug in the input and open up the kwargs into the arguments
-                # of the current function, and collect the output
-                new_output = cur_f(new_output, **cur_f_args)
+        new_output = new_state
+        # Each after-the-memory function, when run, will update the
+        # self.output value and pass that to the next function
+        for f in range(len(self._out_fs)):
+            # The current function we're working with
+            cur_f = self._out_fs[f]
+            # The current function's args passed in (cur_f_args is a dict),
+            # everything here has been prepared outside of the Cell
+            cur_f_args = self._out_fs_kwargs[f]
+            # Plug in the input and open up the kwargs into the arguments
+            # of the current function, and collect the output
+            new_output = cur_f(new_output, **cur_f_args)
 
-            print('  GenFuncCell of node %s >>  post-out-func size %s\n' % (
-                self._scope,
-                new_output.get_shape().as_list())
-            )
+        print('  GenFuncCell of node %s >>  post-out-func size %s\n' % (
+            self._scope,
+            new_output.get_shape().as_list())
+        )
 
-            return new_output, new_state
+        return new_output, new_state
 
     def get_state(self, t=0):
         # Return the topmost state or -t_th state (0 is current, 1 is previous)
