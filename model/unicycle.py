@@ -273,35 +273,36 @@ def mnist_benchmark(inputs, **kwargs):
     #     inputs = tf.reshape(inputs['images'], [input_shape[0], int(input_shape[1]**0.5), int(input_shape[1]**0.5), 1])
 
     fc1_weights = tf.get_variable('fcw1',  # fully connected, depth 512.
-        initializer=tf.truncated_normal([784, 2048],
-                          stddev=0.1,
-                          seed=SEED,
-                          dtype=tf.float32))
+                                  initializer=tf.truncated_normal([784, 2048],
+                                                                  stddev=0.1,
+                                                                  seed=SEED,
+                                                                  dtype=tf.float32))
     fc1_biases = tf.get_variable('fcb1', initializer=tf.constant(0.1, shape=[2048], dtype=tf.float32))
     fc2_weights = tf.get_variable('fcw2', initializer=tf.truncated_normal([2048, NUM_LABELS],
-                                                stddev=0.1,
-                                                seed=SEED,
-                                                dtype=tf.float32))
+                                                                          stddev=0.1,
+                                                                          seed=SEED,
+                                                                          dtype=tf.float32))
     fc2_biases = tf.get_variable('fcb2', initializer=tf.constant(0.1,
-                                         shape=[NUM_LABELS],
-                                         dtype=tf.float32))
-
+                                                                 shape=[NUM_LABELS],
+                                                                 dtype=tf.float32))
+    
     """The Model definition."""
 
     # Fully connected layer. Note that the '+' operation automatically
     # broadcasts the biases.
-    hidden = tf.nn.relu(tf.matmul(inputs, fc1_weights) + fc1_biases)
+    pre_hidden = tf.matmul(inputs, fc1_weights) + fc1_biases
+    hidden = tf.nn.relu(pre_hidden)
     # Add a 50% dropout during training only. Dropout also scales
     # activations such that no rescaling is needed at evaluation time.
 
-    return tf.matmul(hidden, fc2_weights) + fc2_biases, \
+    return tf.matmul(hidden, fc2_weights) + fc2_biases, pre_hidden, hidden,\
         {'input': 'image_input_1',
          'type': 'lrnorm',
          'depth_radius': 4,
          'bias': 1,
          'alpha': 0.0001111,
          'beta': 0.00001111,
-         'weights': [fc1_weights, fc2_weights]}
+         'weights': [fc1_weights, fc2_weights, fc1_biases, fc2_biases]}
 
 
 def alexnet_tfutils(inputs, **kwargs):

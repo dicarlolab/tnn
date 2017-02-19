@@ -28,6 +28,7 @@ def create_kwargs_conv(fn, input_size, name):
     if 'padding' in fn:
         out_dict['padding'] = fn['padding'].upper()
     if 'init' in fn:
+        print("HELLO!", 'stddev' in fn)
         out_dict['init'] = initializer(
             kind=fn['init'],
             stddev=fn['stddev'] if 'stddev' in fn else .01)
@@ -93,7 +94,10 @@ def create_kwargs_fc(fn, input_size, train=False):
 
     out_dict['output_size'] = fn['output_size']
     if 'init' in fn:
-        init = initializer(shape=out_dict['output_size'] ,kind=fn['init'], seed=fn['seed'] if 'seed' in fn else None)
+        init = initializer(shape=out_dict['output_size'],
+                           kind=fn['init'],
+                           stddev=fn.get('stddev'),
+                           seed=fn['seed'] if 'seed' in fn else None)
     else:
         init = initializer()
     out_dict['init'] = init
