@@ -214,7 +214,7 @@ class GenFuncCell(RNNCell):
         new = tf.mul(state, mem) + in_layer
         return new
 
-    def fc(self, input_, output_size, init, bias=1, dropout=0):
+    def fc(self, input_, output_size, init, bias=1, dropout=0, seed=None):
         # Move everything into depth so we can perform a single matrix mult.
         batch_size = input_.get_shape()[0].value
         reshape = tf.reshape(input_, [batch_size, -1])

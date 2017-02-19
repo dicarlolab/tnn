@@ -93,7 +93,7 @@ def create_kwargs_fc(fn, input_size, train=False):
 
     out_dict['output_size'] = fn['output_size']
     if 'init' in fn:
-        init = initializer(kind=fn['init'])
+        init = initializer(shape=out_dict['output_size'] ,kind=fn['init'], seed=fn['seed'] if 'seed' in fn else None)
     else:
         init = initializer()
     out_dict['init'] = init
@@ -210,13 +210,15 @@ def fetch_node(nickname='no_nickname_given', graph=None, **kwargs):
     return matching
 
 
-def initializer(kind='xavier', stddev=.01, seed=None):
+def initializer(shape=None, kind='xavier', stddev=.01, seed=None):
     if kind == 'xavier':
         init = tf.contrib.layers.initializers.xavier_initializer(
-            seed=seed if seed else randint(1, 1000))
+            seed=seed if seed else None)
     elif kind == 'trunc_norm':
         init = tf.truncated_normal_initializer(
-            mean=0, stddev=stddev, seed=seed if seed else randint(1, 1000))
+                                   stddev=stddev,
+                                   seed=seed if seed else None,
+                                   dtype=tf.float32)
     else:
         raise ValueError('Please provide an appropriate initialization '
                          'method: xavier or trunc_norm')
