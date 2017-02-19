@@ -99,7 +99,7 @@ params = {
     },
 
     'model_params': {
-        'func': unicycle.mnist_tfutils,
+        'func': unicycle.mnist_unicycle_testing,
         'seed': 0,
         'norm': False  # do you want local response normalization?
     },
