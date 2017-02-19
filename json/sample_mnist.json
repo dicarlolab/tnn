@@ -14,6 +14,8 @@
                      "init":"trunc_norm",
                      "bias":0.1,
                      "seed":12345
+                   },
+                   { "type":"relu"
                    }
                   ],
       "type":"cell"
