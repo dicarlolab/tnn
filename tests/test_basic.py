@@ -81,7 +81,7 @@ def mnist_conv(images, labels):
     fc2 = tf.matmul(fc1, weights_fc_2) + biases_fc_2
 
     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=fc2, labels=labels)
-    return {'pool1': pool1, 'pool2': pool2, 'fc1': fc1, 'fc2': fc2, 'loss': loss}
+    return {'pool1': pool1, 'pool2': pool2, 'fc1': fc1, 'fc2': fc2, 'loss': tf.reduce_mean(loss)}
 
 
 def test_mnist_fc(mnist):
@@ -128,7 +128,6 @@ def test_mnist_conv(mnist):
     for name, var in bench_vars.items():
         bench_targets['grad_' + name] = tf.gradients(bench_targets['loss'], var)
 
-
     # initialize the unicycle model
     with tf.variable_scope('unicycle'):
         unicycle_model = Unicycle()
@@ -141,7 +140,7 @@ def test_mnist_conv(mnist):
                    'pool2': G.node['conv_2']['tf_cell'].get_output(),
                    'fc1': G.node['fc_1']['tf_cell'].get_output(),
                    'fc2': G.node['fc_2']['tf_cell'].get_output(),
-                   'loss': uni_loss}
+                   'loss': tf.reduce_mean(uni_loss)}
     uni_vars = {v.name.split('/')[1]:v for v in tf.global_variables()
                  if v.name.startswith('unicycle') and 'decay_param' not in v.name}
 
@@ -169,7 +168,7 @@ def test_alexnet(imagenet):
                          'fc6': graph.get_tensor_by_name('benchmark/fc6/relu:0'),
                          'fc7': graph.get_tensor_by_name('benchmark/fc7/relu:0'),
                          'fc8': graph.get_tensor_by_name('benchmark/fc8/fc:0'),
-                         'loss': bench_loss
+                         'loss': tf.reduce_mean(bench_loss)
                          }
 
     bench_vars = {'/'.join(v.name.split('/')[1:]):v for v in tf.global_variables()
@@ -193,7 +192,7 @@ def test_alexnet(imagenet):
                    'fc6': G.node['fc_6']['tf_cell'].get_output(),
                    'fc7': G.node['fc_7']['tf_cell'].get_output(),
                    'fc8': G.node['fc_8']['tf_cell'].get_output(),
-                   'loss': uni_loss}
+                   'loss': tf.reduce_mean(uni_loss)}
 
     uni_vars = {}
     for v in tf.global_variables():
