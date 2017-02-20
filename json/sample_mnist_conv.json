@@ -3,24 +3,28 @@
     { "nickname":"image_input_1", 
       "batch_size":256,
       "functions":[{ "type":"placeholder",
-                     "output_size":[1,784]
+                     "output_size":[1, 784]
                    }
                   ],
       "type":"placeholder" 
     }, 
     { "nickname":"conv_1", 
       "functions":[{ "type":"conv",
-                     "filter_size":5,
-                     "num_filters":32,
-                     "stride":1,
-                     "padding":"same"
+                     "filter_size": 5,
+                     "num_filters": 32,
+                     "stride": 1,
+		     "seed": 66478,
+		     "init": "trunc_norm",
+		     "stddev": 0.1,
+                     "padding": "same",
+		     "bias": 0.0
                    },
-                   { "type":"relu"
+                   { "type": "relu"
                    },
-                   { "type":"maxpool",
-                     "k_size":2,
-                     "stride":2,
-                     "padding":"same"
+                   { "type": "maxpool",
+                     "k_size": 2,
+                     "stride": 2,
+                     "padding": "same"
                    }
                   ],
       "type":"cell"
@@ -30,7 +34,11 @@
                      "filter_size":5,
                      "num_filters":64,
                      "stride":1,
-                     "padding":"same"
+                     "padding":"same",
+		     "init": "trunc_norm",
+		     "stddev": 0.1,
+		     "seed": 66478,
+		     "bias": 0.1
                    },
                    { "type":"relu"
                    },
@@ -46,8 +54,12 @@
       "functions":[{ "type":"fc", 
                      "output_size":512,
                      "init":"trunc_norm",
-                     "bias":0.1
-                   }
+		     "stddev": 0.1,
+                     "bias": 0.1,
+		     "seed": 66478
+                   },
+		   { "type":"relu"
+		   }
                   ],
       "type":"cell"
     },
@@ -55,7 +67,9 @@
       "functions":[{ "type":"fc", 
                      "output_size":10,
                      "init":"trunc_norm",
-                     "bias":0.1
+		     "stddev": 0.1,
+                     "bias": 0.1,
+		     "seed": 66478
                    }
                   ],
       "type":"cell"

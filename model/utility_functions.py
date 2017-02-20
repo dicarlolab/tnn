@@ -28,10 +28,10 @@ def create_kwargs_conv(fn, input_size, name):
     if 'padding' in fn:
         out_dict['padding'] = fn['padding'].upper()
     if 'init' in fn:
-        print("HELLO!", 'stddev' in fn)
         out_dict['init'] = initializer(
             kind=fn['init'],
-            stddev=fn['stddev'] if 'stddev' in fn else .01)
+            stddev=fn.get('stddev'),
+            seed=fn.get('seed'))
     if 'bias' in fn:
         out_dict['bias'] = fn['bias']
     out_dict['name'] = str(name) if isinstance(name, basestring) \
