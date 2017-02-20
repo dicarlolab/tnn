@@ -88,8 +88,12 @@ def test_mnist_fc(mnist):
         bench_targets = mnist_fc(mnist.train.images[:BATCH_SIZE],
                                  mnist.train.labels[:BATCH_SIZE].astype(np.int32))
 
-    variables = {v.name.split('/')[1]:v for v in tf.global_variables() if v.name.startswith('benchmark')}
-    bench_targets.update(variables)
+    bench_vars = {v.name.split('/')[1]:v for v in tf.global_variables() if v.name.startswith('benchmark')}
+    bench_targets.update(bench_vars)
+    for name, var in bench_vars.items():
+        bench_targets['grad_' + name] = tf.gradients(bench_targets['loss'], var)
+    opt = tf.train.MomentumOptimizer(learning_rate=.01, momentum=.9)
+    bench_targets['optimizer'] = opt.minimize(bench_targets['loss'])
 
     # initialize the unicycle model
     with tf.variable_scope('unicycle'):
@@ -102,22 +106,29 @@ def test_mnist_fc(mnist):
     uni_targets = {'fc1': G.node['fc_1']['tf_cell'].get_output(),
                    'fc2': G.node['fc_2']['tf_cell'].get_output(),
                    'loss': uni_loss}
-    variables = {v.name.split('/')[1]:v for v in tf.global_variables()
-                 if v.name.startswith('unicycle') and 'decay_param' not in v.name}
-    uni_targets.update(variables)
+    uni_vars = {v.name.split('/')[1]:v for v in tf.global_variables()
+                if v.name.startswith('unicycle') and 'decay_param' not in v.name}
+    uni_targets.update(uni_vars)
+    for name, var in uni_vars.items():
+        uni_targets['grad_' + name] = tf.gradients(uni_targets['loss'], var)
 
-    assert np.array_equal(uni_targets.keys(), bench_targets.keys())
+    opt = tf.train.MomentumOptimizer(learning_rate=.01, momentum=.9)
+    uni_targets['optimizer'] = opt.minimize(uni_targets['loss'])
+
+    assert np.array_equal(sorted(uni_targets.keys()), sorted(bench_targets.keys()))
 
     init = tf.global_variables_initializer()
     sess = tf.Session()
     sess.run(init)
 
-    # check if the outputs are identical
-    bench_res = sess.run(bench_targets)
-    uni_res = sess.run(uni_targets)
+    for step in range(4):
+        # check if the outputs are identical
+        bench_res = sess.run(bench_targets)
+        uni_res = sess.run(uni_targets)
 
-    for name in bench_res:
-        assert np.allclose(bench_res[name], uni_res[name])
+        for name in bench_res:
+            if name != 'optimizer':
+                assert np.allclose(bench_res[name], uni_res[name], atol=1e-3, rtol=1e-3)
 
     sess.close()
 
@@ -149,7 +160,7 @@ def test_mnist_conv(mnist):
                  if v.name.startswith('unicycle') and 'decay_param' not in v.name}
 
     uni_targets.update(variables)
-    assert np.array_equal(uni_targets.keys(), bench_targets.keys())
+    assert np.array_equal(sorted(uni_targets.keys()), sorted(bench_targets.keys()))
 
     init = tf.global_variables_initializer()
     sess = tf.Session()
@@ -168,5 +179,5 @@ def test_mnist_conv(mnist):
 if __name__ == '__main__':
     mnist = get_mnist_data()
     test_mnist_fc(mnist)
-    tf.reset_default_graph()
-    test_mnist_conv(mnist)
+    # tf.reset_default_graph()
+    # test_mnist_conv(mnist)
