@@ -1,0 +1,72 @@
+{
+"nodes":[
+    { "nickname":"image_input_1", 
+      "batch_size":256,
+      "functions":[{ "type":"placeholder",
+                     "output_size":[1,784]
+                   }
+                  ],
+      "type":"placeholder" 
+    }, 
+    { "nickname":"conv_1", 
+      "functions":[{ "type":"conv",
+                     "filter_size":5,
+                     "num_filters":32,
+                     "stride":1,
+                     "padding":"same"
+                   },
+                   { "type":"relu"
+                   },
+                   { "type":"maxpool",
+                     "k_size":2,
+                     "stride":2,
+                     "padding":"same"
+                   }
+                  ],
+      "type":"cell"
+    },
+    { "nickname":"conv_2", 
+      "functions":[{ "type":"conv",
+                     "filter_size":5,
+                     "num_filters":64,
+                     "stride":1,
+                     "padding":"same"
+                   },
+                   { "type":"relu"
+                   },
+                   { "type":"maxpool",
+                     "k_size":2,
+                     "stride":2,
+                     "padding":"same"
+                   }
+                  ],
+      "type":"cell"
+    },
+    { "nickname":"fc_1", 
+      "functions":[{ "type":"fc", 
+                     "output_size":512,
+                     "init":"trunc_norm",
+                     "bias":0.1
+                   }
+                  ],
+      "type":"cell"
+    },
+    { "nickname":"output_1", 
+      "functions":[{ "type":"fc", 
+                     "output_size":10,
+                     "init":"trunc_norm",
+                     "bias":0.1
+                   }
+                  ],
+      "type":"cell"
+    }
+],
+"links":[
+    { "from":"image_input_1", "to":"conv_1"},
+    { "from":"conv_1", "to":"conv_2"},
+    { "from":"conv_2", "to":"fc_1"},
+    { "from":"fc_1", "to":"output_1"}
+],
+"backward":[
+]
+}
