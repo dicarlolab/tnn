@@ -121,14 +121,16 @@ def test_mnist_fc(mnist):
     sess = tf.Session()
     sess.run(init)
 
-    for step in range(4):
+    for step in range(200):
         # check if the outputs are identical
         bench_res = sess.run(bench_targets)
         uni_res = sess.run(uni_targets)
 
         for name in bench_res:
             if name != 'optimizer':
-                assert np.allclose(bench_res[name], uni_res[name], atol=1e-5, rtol=1e-5)
+                assert np.allclose(bench_res[name], uni_res[name], atol=1e-3, rtol=1e-3)
+            if name == 'loss':
+                print(bench_res[name], uni_res[name])
 
         # print(step, np.max(np.abs(np.mean(bench_res['loss'])) - np.abs(np.mean(uni_res['loss']))))
 
