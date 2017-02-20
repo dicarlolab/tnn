@@ -1,19 +1,19 @@
 {
 "nodes":[
-    { "nickname":"image_input_1", 
+    { "nickname":"image_input_1",
       "batch_size":256,
       "functions":[{ "type":"placeholder",
                      "output_size":[1, 784]
                    }
                   ],
-      "type":"placeholder" 
-    }, 
-    { "nickname":"conv_1", 
+      "type":"placeholder"
+    },
+    { "nickname":"conv_1",
       "functions":[{ "type":"conv",
                      "filter_size": 5,
                      "num_filters": 32,
                      "stride": 1,
-		     "seed": 66478,
+		     "seed": 12345,
 		     "init": "trunc_norm",
 		     "stddev": 0.1,
                      "padding": "same",
@@ -29,7 +29,7 @@
                   ],
       "type":"cell"
     },
-    { "nickname":"conv_2", 
+    { "nickname":"conv_2",
       "functions":[{ "type":"conv",
                      "filter_size":5,
                      "num_filters":64,
@@ -37,7 +37,7 @@
                      "padding":"same",
 		     "init": "trunc_norm",
 		     "stddev": 0.1,
-		     "seed": 66478,
+		     "seed": 12345,
 		     "bias": 0.1
                    },
                    { "type":"relu"
@@ -50,26 +50,26 @@
                   ],
       "type":"cell"
     },
-    { "nickname":"fc_1", 
-      "functions":[{ "type":"fc", 
+    { "nickname":"fc_1",
+      "functions":[{ "type":"fc",
                      "output_size":512,
                      "init":"trunc_norm",
 		     "stddev": 0.1,
                      "bias": 0.1,
-		     "seed": 66478
+		     "seed": 12345
                    },
 		   { "type":"relu"
 		   }
                   ],
       "type":"cell"
     },
-    { "nickname":"output_1", 
-      "functions":[{ "type":"fc", 
+    { "nickname":"fc_2",
+      "functions":[{ "type":"fc",
                      "output_size":10,
                      "init":"trunc_norm",
 		     "stddev": 0.1,
                      "bias": 0.1,
-		     "seed": 66478
+		     "seed": 12345
                    }
                   ],
       "type":"cell"
@@ -79,7 +79,7 @@
     { "from":"image_input_1", "to":"conv_1"},
     { "from":"conv_1", "to":"conv_2"},
     { "from":"conv_2", "to":"fc_1"},
-    { "from":"fc_1", "to":"output_1"}
+    { "from":"fc_1", "to":"fc_2"}
 ],
 "backward":[
 ]

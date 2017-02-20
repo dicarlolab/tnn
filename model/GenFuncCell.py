@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 import tensorflow as tf
 
-from tensorflow.python.ops.rnn_cell import RNNCell
+from tensorflow.contrib.rnn import RNNCell
 
 verbose = True
 
@@ -211,7 +211,7 @@ class GenFuncCell(RNNCell):
             self._scope, mem.name))
         # decay_factor = tf.sigmoid(mem)
         # new = tf.mul(state, decay_factor) + in_layer
-        new = tf.mul(state, mem) + in_layer
+        new = tf.multiply(state, mem) + in_layer
         return new
 
     def fc(self, input_, output_size, init, bias=1, dropout=0, seed=None):
@@ -242,7 +242,7 @@ class GenFuncCell(RNNCell):
              ksize=3,
              stride=1,
              padding='SAME',
-             init=tf.contrib.layers.initializers.xavier_initializer(),
+             init=tf.contrib.layers.xavier_initializer(),
              stddev=.01,
              bias=0,
              name=''):
@@ -266,7 +266,7 @@ class GenFuncCell(RNNCell):
             initializer=init,
             shape=[ksize1, ksize2, in_shape, out_shape],
             dtype=tf.float32,
-            name='filter_tensor_%s' % (name))
+            name='weights_%s' % (self._scope))
         conv = tf.nn.conv2d(in_layer,
                             kernel,
                             strides=[1, stride, stride, 1],
@@ -275,8 +275,8 @@ class GenFuncCell(RNNCell):
         biases = tf.get_variable(initializer=tf.constant_initializer(bias),
                                  shape=[out_shape],
                                  dtype=tf.float32,
-                                 name='conv_bias_%s' % (name))
-        conv = tf.nn.bias_add(conv, biases)
+                                 name='biases_%s' % (self._scope))
+        conv = tf.nn.bias_add(conv, biases, name=self._scope)
 
         return conv
 

@@ -106,11 +106,11 @@ class Harbor(object):
             for i in big_input_list:
                 print ' +- ', i
             if len(big_input_list[0].get_shape().as_list()) == 4:
-                out = tf.concat(3, big_input_list, name=self.name +
+                out = tf.concat(big_input_list, axis=3, name=self.name +
                                 '_harbor_concat')
             # If not image:
             else:
-                out = tf.concat(1, big_input_list, name=self.name +
+                out = tf.concat(big_input_list, axis=1, name=self.name +
                                 '_harbor_concat')
         elif self.combination_type == 'sum':
             out = tf.add_n(big_input_list, name=self.name + '_harbor_sum')
