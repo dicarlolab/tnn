@@ -7,6 +7,9 @@ from tensorflow.examples.tutorials.mnist import input_data
 sys.path.append('model')
 from unicycle import Unicycle
 
+sys.path.append('../../tfutils/imagenet/')
+from tfutils import data, model
+
 
 # Import MNIST data
 BATCH_SIZE = 256
@@ -149,6 +152,65 @@ def test_mnist_conv(mnist):
     run(bench_targets, uni_targets, nsteps=100)
 
 
+def test_alexnet(imagenet):
+    # initialize the benchmark model
+    images, labels = imagenet.next()
+    images = tf.constant(images)
+    labels = tf.constant(labels)
+    with tf.variable_scope('benchmark'):
+        m = model.alexnet(images, train=False)
+        bench_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=m.output, labels=labels)
+        graph = tf.get_default_graph()
+        bench_targets = {'conv1': graph.get_tensor_by_name('benchmark/conv1/pool:0'),
+                         'conv2': graph.get_tensor_by_name('benchmark/conv2/pool:0'),
+                         'conv3': graph.get_tensor_by_name('benchmark/conv3/relu:0'),
+                         'conv4': graph.get_tensor_by_name('benchmark/conv4/relu:0'),
+                         'conv5': graph.get_tensor_by_name('benchmark/conv5/pool:0'),
+                         'fc6': graph.get_tensor_by_name('benchmark/fc6/relu:0'),
+                         'fc7': graph.get_tensor_by_name('benchmark/fc7/relu:0'),
+                         'fc8': graph.get_tensor_by_name('benchmark/fc8/fc:0'),
+                         'loss': bench_loss
+                         }
+
+    bench_vars = {'/'.join(v.name.split('/')[1:]):v for v in tf.global_variables()
+                 if v.name.startswith('benchmark')}
+    bench_targets.update(bench_vars)
+    for name, var in bench_vars.items():
+        bench_targets['grad_' + name] = tf.gradients(bench_targets['loss'], var)
+
+    # initialize the unicycle model
+    with tf.variable_scope('unicycle'):
+        unicycle_model = Unicycle()
+        G = unicycle_model.build(json_file_name='sample_alexnet.json')
+        out = unicycle_model({'images': images}, G)
+        uni_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=out.get_output(), labels=labels)
+
+    uni_targets = {'conv1': G.node['conv_1']['tf_cell'].get_output(),
+                   'conv2': G.node['conv_2']['tf_cell'].get_output(),
+                   'conv3': G.node['conv_3']['tf_cell'].get_output(),
+                   'conv4': G.node['conv_4']['tf_cell'].get_output(),
+                   'conv5': G.node['conv_5']['tf_cell'].get_output(),
+                   'fc6': G.node['fc_6']['tf_cell'].get_output(),
+                   'fc7': G.node['fc_7']['tf_cell'].get_output(),
+                   'fc8': G.node['fc_8']['tf_cell'].get_output(),
+                   'loss': uni_loss}
+
+    uni_vars = {}
+    for v in tf.global_variables():
+        if v.name.startswith('unicycle') and 'decay_param' not in v.name:
+            name, varno = v.name.split('/')[1].split(':')
+            name, layer, layerno = name.split('_')
+            if name == 'biases':
+                name = 'bias'
+            uni_vars[layer + layerno + '/' + name + ':' + varno] = v
+
+    uni_targets.update(uni_vars)
+    for name, var in uni_vars.items():
+        uni_targets['grad_' + name] = tf.gradients(uni_targets['loss'], var)
+
+    run(bench_targets, uni_targets, nsteps=100)
+
+
 def run(bench_targets, uni_targets, nsteps=100):
     assert np.array_equal(sorted(uni_targets.keys()), sorted(bench_targets.keys()))
 
@@ -172,10 +234,10 @@ def run(bench_targets, uni_targets, nsteps=100):
                 if name != 'optimizer':
                     assert np.allclose(bench_res[name], uni_res[name], atol=1e-2, rtol=1e-2)
 
-        else:  # after that, stuff starts to diverge too much, but the loss should be ok
+        elif step > 30:  # after that, the loss should be stable
             bench_loss = sess.run(bench_targets['loss'])
             uni_loss = sess.run(uni_targets['loss'])
-            assert np.allclose(bench_loss, uni_loss, atol=1e-2, rtol=1e-2)
+            assert np.allclose(bench_loss, uni_loss, atol=1e-5, rtol=1e-5)
 
     sess.close()
 
@@ -183,5 +245,9 @@ def run(bench_targets, uni_targets, nsteps=100):
 if __name__ == '__main__':
     mnist = get_mnist_data()
     test_mnist_fc(mnist)
+
     tf.reset_default_graph()
     test_mnist_conv(mnist)
+
+    imagenet = data.ImageNet('/data/imagenet_dataset/imagenet2012.hdf5', batch_size=256, crop_size=224)
+    test_alexnet(imagenet)

@@ -220,11 +220,11 @@ class GenFuncCell(RNNCell):
         reshape = tf.reshape(input_, [batch_size, -1])
         dim = reshape.get_shape()[1].value
         weights = tf.get_variable(
-            'weights_%s' % (self._scope),
+            name='weights_%s' % (self._scope),
             shape=[dim, output_size],
             initializer=init)
         biases = tf.get_variable(
-            'biases_%s' % (self._scope),
+            name='biases_%s' % (self._scope),
             shape=[output_size],
             initializer=tf.constant_initializer(0.1))
         mulss = tf.nn.bias_add(tf.matmul(reshape, weights),
