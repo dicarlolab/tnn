@@ -39,7 +39,7 @@ def mnist_fc(images, labels):
     fc2 = tf.matmul(fc1, weights_fc_2) + biases_fc_2
 
     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=fc2, labels=labels)
-    return {'fc1': fc1, 'fc2': fc2, 'loss': loss}
+    return {'fc1': fc1, 'fc2': fc2, 'loss': tf.reduce_mean(loss)}
 
 
 def mnist_conv(images, labels):
@@ -105,7 +105,7 @@ def test_mnist_fc(mnist):
 
     uni_targets = {'fc1': G.node['fc_1']['tf_cell'].get_output(),
                    'fc2': G.node['fc_2']['tf_cell'].get_output(),
-                   'loss': uni_loss}
+                   'loss': tf.reduce_mean(uni_loss)}
     uni_vars = {v.name.split('/')[1]:v for v in tf.global_variables()
                 if v.name.startswith('unicycle') and 'decay_param' not in v.name}
     uni_targets.update(uni_vars)
@@ -128,7 +128,9 @@ def test_mnist_fc(mnist):
 
         for name in bench_res:
             if name != 'optimizer':
-                assert np.allclose(bench_res[name], uni_res[name], atol=1e-3, rtol=1e-3)
+                assert np.allclose(bench_res[name], uni_res[name], atol=1e-5, rtol=1e-5)
+
+        # print(step, np.max(np.abs(np.mean(bench_res['loss'])) - np.abs(np.mean(uni_res['loss']))))
 
     sess.close()
 
