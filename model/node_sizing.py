@@ -1,5 +1,5 @@
 from dbgr import dbgr_silent
-from utility_functions import fetch_node
+from utility_functions import fetch_node, get_forward_pred
 import utility_functions
 from harbor import Harbor, Policy
 from itertools import chain
@@ -153,12 +153,3 @@ def all_node_size_find(G,
     dbgr('\nAll sizes calculated!')
 
     return G
-
-
-def get_forward_pred(G, node):
-    # Get only those predecessors that are not feedback
-    # First gather a list of all predecessors
-    a = G.predecessors(node)
-    # Then filter out the nodes that are feedback
-    b = [i for i in a if not G.edge[i][node]['feedback']]
-    return b
