@@ -15,7 +15,7 @@ def unroller_call(input_sequence, G, ntimes=None, last=None):
     if not last:
         last_nickname = [n for n in G.nodes() if
                          len([i for i in nx.all_neighbors(G, n)
-                              if not G[n][i]['feedback']]) == 0][0]
+                              if not G.edge[n][i]['feedback']]) == 0][0]
         last = G.node[last_nickname]['tf_cell']
 
     # Then, find the longest path from a root to the output in graph G:
