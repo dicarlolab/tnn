@@ -225,6 +225,15 @@ def fetch_node(nickname='no_nickname_given', graph=None, **kwargs):
     return matching
 
 
+def get_forward_pred(G, node):
+    # Get only those predecessors that are not feedback
+    # First gather a list of all predecessors
+    a = G.predecessors(node)
+    # Then filter out the nodes that are feedback
+    b = [i for i in a if not G.edge[i][node]['feedback']]
+    return b
+
+
 def initializer(shape=None, kind='xavier', stddev=.01, seed=None):
     if kind == 'xavier':
         init = tf.contrib.layers.xavier_initializer(
