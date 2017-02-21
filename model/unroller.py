@@ -8,8 +8,7 @@ import tensorflow as tf
 
 def unroller_call(input_sequence, G, last=None):
     # Calculate ntimes from length of input_sequence and nx_graph structure
-
-    ntimes = 10     # This is a hack, should be len(input_sequence)
+    ntimes = 12     # This is a hack, should be len(input_sequence)
     # Loop over time
     for t in range(ntimes):
         # Loop over nodes

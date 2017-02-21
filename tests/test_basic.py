@@ -223,9 +223,7 @@ def test_alexnet(imagenet):
 
     print("G", grads)
 
-    return bench_targets, uni_targets
-    
-    #run(bench_targets, uni_targets, nsteps=100)
+    run(bench_targets, uni_targets, nsteps=100)
 
 
 def run(bench_targets, uni_targets, nsteps=100):
