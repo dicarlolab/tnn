@@ -6,7 +6,7 @@ Unicycle Settings
 BATCH_SIZE = 256
 
 # Verbose mode on or off
-VERBOSE = True
+VERBOSE = False
 
 # Default Harbor_Master policy
 # (  ('max', 'avg', 'up', func) , ('concat','sum',func)  )

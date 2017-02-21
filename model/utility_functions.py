@@ -104,7 +104,6 @@ def create_kwargs_fc(fn, input_size, train=False):
     if 'bias' in fn:
         out_dict['bias'] = fn['bias']
     out_dict['dropout'] = 0.5 if train else 0
-
     return out_dict, calc_size_after(input_size, fn)
 
 
@@ -160,15 +159,27 @@ def calc_size_after(input_size, function_):
 
     elif function_['type'] == 'maxpool':
         if function_['padding'] == 'valid':
-            out_height = floor(float(input_size[1] - function_['k_size'])
-                               / float(function_['stride'])) + 1
-            out_width = floor(float(input_size[2] - function_['k_size'])
-                              / float(function_['stride'])) + 1
+            #out_height = floor(float(input_size[1] - function_['k_size'])
+            #                   / float(function_['stride'])) + 1
+            #out_width = floor(float(input_size[2] - function_['k_size'])
+            #                  / float(function_['stride'])) + 1
+            out_height = int(ceil(float(input_size[1]
+                                        - function_['filter_size'] + 1)
+                                  / float(function_['stride'])))
+            out_width = int(ceil(float(input_size[2]
+                                       - function_['filter_size'] + 1)
+                                 / float(function_['stride'])))
+
         elif function_['padding'] == 'same':
-            out_height = ceil(float(input_size[1] - function_['k_size'])
-                              / float(function_['stride'])) + 1
-            out_width = ceil(float(input_size[2] - function_['k_size'])
-                             / float(function_['stride'])) + 1
+            #out_height = ceil(float(input_size[1] - function_['k_size'])
+            #                  / float(function_['stride'])) + 1
+            #out_width = ceil(float(input_size[2] - function_['k_size'])
+            #                 / float(function_['stride'])) + 1
+            out_height = int(ceil(float(input_size[1])
+                              / float(function_['stride'])))
+            out_width = int(ceil(float(input_size[2])
+                             / float(function_['stride'])))
+
         return [input_size[0], int(out_height), int(out_width), input_size[3]]
 
     elif function_['type'] == 'relu':
@@ -216,7 +227,7 @@ def fetch_node(nickname='no_nickname_given', graph=None, **kwargs):
 
 def initializer(shape=None, kind='xavier', stddev=.01, seed=None):
     if kind == 'xavier':
-        init = tf.contrib.layers.initializers.xavier_initializer(
+        init = tf.contrib.layers.xavier_initializer(
             seed=seed if seed else None)
     elif kind == 'trunc_norm':
         init = tf.truncated_normal_initializer(

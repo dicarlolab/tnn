@@ -1,125 +1,148 @@
 {
 "nodes":[
-    { "nickname":"image_input_1", 
+    { "nickname":"image_input_1",
       "batch_size":256,
       "functions":[{ "type":"placeholder",
                      "output_size":[224,224,3]
                    }
                   ],
-      "type":"placeholder" 
-    }, 
-    { "nickname":"conv_1",  
-      "functions":[{ "type":"conv", 
+      "type":"placeholder"
+    },
+    { "nickname":"conv_1",
+      "functions":[{ "type":"conv",
                      "filter_size":11,
                      "num_filters":96,
                      "stride":4,
-                     "padding":"valid"
+                     "padding":"valid",
+                     "seed":12345,
+		     "bias": 0.0,
+		     "init": "xavier"
                    },
                    { "type":"relu"
                    },
                    { "type":"norm",
-                     "depth_radius":4,
-                     "bias":1,
-                     "alpha":0.0001111
+                     "depth_radius":5,
+                     "bias": 1,
+                     "alpha" :0.0001,
+                     "beta": 0.75
                    },
-                   { "type":"maxpool",
-                     "k_size":3,
-                     "stride":2,
-                     "padding":"valid"
+                   { "type": "maxpool",
+                     "k_size": 3,
+                     "stride": 2,
+                     "padding":"same"
                    }
                   ],
       "type":"cell"
     },
-    { "nickname":"conv_2", 
-      "functions":[{ "type":"conv", 
-                     "filter_size":5,
-                     "num_filters":256,
-                     "stride":1,
-                     "padding":"same"
+    { "nickname":"conv_2",
+      "functions":[{ "type": "conv",
+                     "filter_size": 5,
+                     "num_filters": 256,
+                     "stride": 1,
+                     "padding": "same",
+                     "seed": 12345,
+		     "bias": 0.0,
+		     "init": "xavier"
                    },
                    { "type":"relu"
                    },
                    { "type":"norm",
-                     "depth_radius":4,
-                     "bias":1,
-                     "alpha":0.0001111
+                     "depth_radius":5,
+                     "bias": 1,
+                     "alpha" :0.0001,
+                     "beta": 0.75
                    },
                    { "type":"maxpool",
                      "k_size":3,
                      "stride":2,
-                     "padding":"valid"
+                     "padding":"same"
                    }
                   ],
       "type":"cell"
     },
-    { "nickname":"conv_3", 
-      "functions":[{ "type":"conv", 
-                     "filter_size":3,
-                     "num_filters":384,
-                     "stride":1,
-                     "padding":"same"
+    { "nickname":"conv_3",
+      "functions":[{ "type": "conv",
+                     "filter_size": 3,
+                     "num_filters": 384,
+                     "stride": 1,
+                     "padding": "same",
+                     "seed": 12345,
+		     "init": "xavier",
+		     "bias": 0.0
                    },
                    { "type":"relu"
                    }
                   ],
       "type":"cell"
     },
-    { "nickname":"conv_4", 
-      "functions":[{ "type":"conv", 
-                     "filter_size":3,
-                     "num_filters":256,
-                     "stride":1,
-                     "padding":"same"
-                   },
-                   { "type":"relu"
-                   }
-                  ],
-      "type":"cell"
-    },
-    { "nickname":"conv_5", 
-      "functions":[{ "type":"conv", 
+    { "nickname":"conv_4",
+      "functions":[{ "type":"conv",
                      "filter_size":3,
                      "num_filters":256,
-                     "stride":1,
-                     "padding":"same"
+                     "stride": 1,
+                     "padding": "same",
+                     "seed": 12345,
+		     "bias": 0.0,
+		     "init": "xavier"
                    },
                    { "type":"relu"
-                   },
-                   { "type":"maxpool",
-                     "k_size":3,
-                     "stride":2,
-                     "padding":"valid"
                    }
                   ],
       "type":"cell"
     },
-    { "nickname":"fc_6", 
-      "functions":[{ "type":"fc", 
+    { "nickname":"conv_5",
+      "functions":[{ "type": "conv",
+                     "filter_size": 3,
+                     "num_filters": 256,
+                     "stride": 1,
+                     "padding": "same",
+                     "seed": 12345,
+		     "init": "xavier",
+		     "bias": 0.0
+                   },
+                   { "type":"relu"
+                   },
+                   { "type": "maxpool",
+                     "k_size": 3,
+                     "stride": 2,
+                     "padding": "same"
+                   }
+                  ],
+      "type":"cell"
+    },
+    { "nickname":"fc_6",
+      "functions":[{ "type":"fc",
                      "output_size":4096,
                      "init":"trunc_norm",
-                     "bias":0.1
+                     "stddev": 0.01,
+                     "bias": 0.1,
+                     "seed":12345
                    },
                    { "type":"relu"
                    }
                   ],
       "type":"cell"
     },
-    { "nickname":"fc_7", 
-      "functions":[{ "type":"fc", 
-                     "output_size":4096,
-                     "init":"trunc_norm",
-                     "bias":0.1
+    { "nickname":"fc_7",
+      "functions":[{ "type":"fc",
+                     "output_size": 4096,
+                     "init": "trunc_norm",
+                     "stddev": 0.01,
+                     "bias": 0.1,
+                     "seed": 12345
                    },
                    { "type":"relu"
                    }
                   ],
       "type":"cell"
     },
-    { "nickname":"fc_8", 
-      "functions":[{ "type":"fc", 
-                     "output_size":1000,
-                     "init":"trunc_norm",
-                     "bias":0.0
+    { "nickname":"fc_8",
+      "functions":[{ "type": "fc",
+                     "output_size": 1000,
+                     "init": "trunc_norm",
+                     "stddev": 0.01,
+                     "bias": 0.0,
+                     "seed": 12345
                    }
                   ],
       "type":"cell"
