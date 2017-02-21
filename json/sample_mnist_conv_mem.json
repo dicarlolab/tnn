@@ -27,6 +27,8 @@
                      "padding": "same"
                    }
                   ],
+      "memory": {"memory_decay":0.5,
+                 "trainable":false},
       "type":"cell"
     },
     { "nickname":"conv_2",
@@ -48,6 +50,8 @@
                      "padding":"same"
                    }
                   ],
+      "memory": {"memory_decay":0.5,
+                 "trainable":false},
       "type":"cell"
     },
     { "nickname":"fc_1",
