@@ -36,7 +36,7 @@ def initialize_nodes(G, fetch_func=fetch_node, train=False):
                               out_fs=[],
                               state_fs_kwargs=sfk,
                               out_fs_kwargs=[],
-                              memory_kwargs={},
+                              memory_kwargs=current_info.get('memory', {}),
                               output_size=G.node[node]['output_size'],
                               state_size=G.node[node]['state_size'],
                               scope=str(node))
