@@ -169,8 +169,7 @@ class Unicycle(object):
 
         G, last = unroller_call(
             input_sequence,
-            G,
-            fetch_node(output_layer=True, graph=G)[0]['tf_cell'])
+            G)
 
         return last
 

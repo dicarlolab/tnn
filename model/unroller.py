@@ -14,7 +14,7 @@ def unroller_call(input_sequence, G, ntimes=None, last=None):
     root_nodes = [i for i in G.nodes() if len(get_forward_pred(G, i)) == 0]
     if not last:
         last_nickname = [n for n in G.nodes() if
-                         len([i for i in nx.all_neighbors(G, n)
+                         len([i for i in nx.neighbors(G, n)
                               if not G.edge[n][i]['feedback']]) == 0][0]
         last = G.node[last_nickname]['tf_cell']
 
