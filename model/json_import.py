@@ -40,7 +40,7 @@ def json_import(filename=None, dbgr=dbgr_silent):
 
     dbgr('Using JSON file %s for import...' % (json_file_name.upper()), 1)
 
-    with open('json/' + json_file_name) as data_file:
+    with open(json_file_name) as data_file:
         json_data = json.load(data_file)
 
     dbgr('done!')

@@ -78,12 +78,12 @@ class Harbor(object):
             raise NotImplementedError
 
         big_input_list = []
-        print ' Harbor call of cell %s:' % (self.name)
-        print ' Inputs:', inputs
+        #print ' Harbor call of cell %s:' % (self.name)
+        #print ' Inputs:', inputs
         for (nickname, input_tensor) in inputs.items():
-            print ' Resizing output of node %s' % (nickname)
+        #    print ' Resizing output of node %s' % (nickname)
 
-            print ' TF Size:', input_tensor.get_shape().as_list()
+        #    print ' TF Size:', input_tensor.get_shape().as_list()
 
             # Function to create the TF node based on current input name,
             # shape, TF value and desired size - returns pool TF node that is
@@ -102,9 +102,9 @@ class Harbor(object):
         # Let's combine all the inputs together:
         if self.combination_type == 'concat':
             # If first input is an image:
-            print ' Harbor post-policy inputs:'
-            for i in big_input_list:
-                print ' +- ', i
+            #print ' Harbor post-policy inputs:'
+            #for i in big_input_list:
+            #    print ' +- ', i
             if len(big_input_list[0].get_shape().as_list()) == 4:
                 out = tf.concat(big_input_list, axis=3, name=self.name +
                                 '_harbor_concat')
@@ -115,8 +115,8 @@ class Harbor(object):
         elif self.combination_type == 'sum':
             out = tf.add_n(big_input_list, name=self.name + '_harbor_sum')
 
-        print ' Harbor of %s >>  out size %s' % (self.name,
-                                                 out.get_shape().as_list())
+        #print ' Harbor of %s >>  out size %s' % (self.name,
+        #                                         out.get_shape().as_list())
 
         # Finally, return the resulting Tensor
         return out
@@ -284,11 +284,11 @@ class Policy(object):
                                           + '_' + input_nickname
                                           + '_harbor_maxpool')
 
-                    print '  >> Harbor Policy of %s - resizing %s, want %s and got %s' % \
-                        (self.name,
-                         input_nickname,
-                         desired_size,
-                         pool.get_shape().as_list())
+                   # print '  >> Harbor Policy of %s - resizing %s, want %s and got %s' % \
+                   #     (self.name,
+                   #      input_nickname,
+                   #      desired_size,
+                   #      pool.get_shape().as_list())
                     # Now append to a list of all the inputs
                     return pool
 

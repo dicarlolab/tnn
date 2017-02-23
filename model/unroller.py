@@ -34,23 +34,25 @@ def unroller_call(input_sequence, G, ntimes=None, last=None):
                             'specify ntimes. Pick one of them.')
         ntimes = len(input_sequence['images'])
 
-        if len(input_sequence['images']) < max_path_length:
-            raise Exception('The input sequence is not long enough! '
-                            '%s is shorter than required %s' %
-                            (len(input_sequence['images']), max_path_length))
+        #if len(input_sequence['images']) < max_path_length:
+        #    raise Exception('The input sequence is not long enough! '
+        #                    '%s is shorter than required %s' %
+        #                    (len(input_sequence['images']), max_path_length))
     else:
         if ntimes is None:
             ntimes = max_path_length
         else:
-            if ntimes < max_path_length:
-                raise Exception('Specified unroll length is not long enough! '
-                                '%s is shorter than required %s' %
-                                (ntimes, max_path_length))
+            pass
+            #if ntimes < max_path_length:
+            #    raise Exception('Specified unroll length is not long enough! '
+            #                    '%s is shorter than required %s' %
+            #                    (ntimes, max_path_length))
 
     # Make the code generally assume list structure of input:
     input_is_list = isinstance(input_sequence['images'], list)
-
     # Loop over time
+
+    print("NTIMES", ntimes)
     for t in range(ntimes):
         # Loop over nodes
         for node in G.nodes():
@@ -64,14 +66,13 @@ def unroller_call(input_sequence, G, ntimes=None, last=None):
                 # for every time step
                 G.node[node]['tf_cell'].update_outputs(
                     input_sequence['images'][t] if input_is_list else input_sequence['images'])
-                G.node[node]['tf_cell'].update_outputs(
+                G.node[node]['tf_cell'].update_states(
                     input_sequence['images'][t] if input_is_list else input_sequence['images'])
             else:
-                inputs = {p: G.node[p]['tf_cell'].get_output(1) for p in preds}
+                inputs = {p: G.node[p]['tf_cell'].get_output(t) for p in preds}
                 # Compute output and state
                 curstate = G.node[node]['tf_cell'].get_state()
                 out, state = G.node[node]['tf_cell'](inputs, curstate)
-
                 G.node[node]['tf_cell'].update_outputs(out)
                 G.node[node]['tf_cell'].update_states(state)
         tf.get_variable_scope().reuse_variables()

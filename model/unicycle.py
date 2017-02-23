@@ -144,11 +144,11 @@ class Unicycle(object):
         G = initialize_nodes(G, train=train)
 
         # Emotional support
-        dbgr(imgs.centaur())
+        #dbgr(imgs.centaur())
 
         return G
 
-    def __call__(self, input_sequence, G, dbgr=dbgr):
+    def __call__(self, input_sequence, G, dbgr=dbgr, ntimes=None):
         """
         When a built and initialized Unicycle instance is called, a custom-
         written unroller 'walks' through the TF graph, and pushes the input
@@ -169,7 +169,8 @@ class Unicycle(object):
 
         G, last = unroller_call(
             input_sequence,
-            G)
+            G,
+            ntimes=ntimes)
 
         return last
 

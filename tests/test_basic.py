@@ -11,6 +11,10 @@ from unicycle import Unicycle
 BATCH_SIZE = 256
 
 
+import os
+codedir = os.path.dirname(os.path.abspath(__file__))
+projdir = os.path.split(codedir)[0]
+
 def test_mnist_fc(mnist):
     # initialize the benchmark model
     with tf.variable_scope('benchmark'):
@@ -25,7 +29,7 @@ def test_mnist_fc(mnist):
     # initialize the unicycle model
     with tf.variable_scope('unicycle'):
         unicycle_model = Unicycle()
-        G = unicycle_model.build(json_file_name='sample_mnist_v2.json')
+        G = unicycle_model.build(json_file_name=os.path.join(projdir, 'json', 'sample_mnist_v2.json'))
         out = unicycle_model({'images': tf.constant(mnist.train.images[:BATCH_SIZE])}, G)
         labels = mnist.train.labels[:BATCH_SIZE].astype(np.int32)
         uni_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=out.get_output(), labels=labels)
@@ -57,7 +61,7 @@ def test_mnist_conv(mnist):
     # initialize the unicycle model
     with tf.variable_scope('unicycle'):
         unicycle_model = Unicycle()
-        G = unicycle_model.build(json_file_name='sample_mnist_conv.json')
+        G = unicycle_model.build(json_file_name=os.path.join(projdir, 'json', 'sample_mnist_conv.json'))
         out = unicycle_model({'images': tf.constant(mnist.train.images[:BATCH_SIZE])}, G)
         labels = mnist.train.labels[:BATCH_SIZE].astype(np.int32)
         uni_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=out.get_output(), labels=labels)
@@ -85,20 +89,24 @@ def test_alexnet(imagenet):
     with tf.variable_scope('benchmark'):
         bench_targets = setup.alexnet(images, labels, 'benchmark', train=False)
 
-    # bench_vars = {'/'.join(v.name.split('/')[1:]):v for v in tf.global_variables()
-    #              if v.name.startswith('benchmark')}
+    bench_vars = {'/'.join(v.name.split('/')[1:]):v for v in tf.global_variables()
+                  if v.name.startswith('benchmark')}
 
-    # bench_targets.update(bench_vars)
+    bench_targets.update(bench_vars)
 
-    # for name, var in bench_vars.items():
-    #     bench_targets['grad_' + name] = tf.gradients(bench_targets['loss'], var)
+    for name, var in bench_vars.items():
+         bench_targets['grad_' + name] = tf.gradients(bench_targets['loss'], var)
 
     # initialize the unicycle model
     with tf.variable_scope('unicycle'):
         unicycle_model = Unicycle()
-        G = unicycle_model.build(json_file_name='sample_alexnet.json')
+        G = unicycle_model.build(json_file_name=os.path.join(projdir, 'json', 'sample_alexnet.json'))
         out = unicycle_model({'images': images}, G)
-        uni_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=out.get_output(),
+        outp = out.get_output()
+        s = outp.get_shape().as_list()
+        print(s)
+        logits = tf.reshape(outp, (s[0], -1))
+        uni_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
                                                                   labels=labels)
 
     uni_targets = {
@@ -113,23 +121,26 @@ def test_alexnet(imagenet):
                    'loss': tf.reduce_mean(uni_loss)
                    }
 
-    # uni_vars = {}
-    # for v in tf.global_variables():
-    #     if v.name.startswith('unicycle') and 'decay_param' not in v.name:
-    #         name, varno = v.name.split('/')[1].split(':')
-    #         name, layer, layerno = name.split('_')
-    #         if name == 'biases':
-    #             name = 'bias'
-    #         uni_vars[layer + layerno + '/' + name + ':' + varno] = v
+    uni_vars = {}
+    for v in tf.global_variables():
+        if v.name.startswith('unicycle') and 'decay_param' not in v.name:
+            name, varno = v.name.split('/')[1].split(':')
+            name, layer, layerno = name.split('_')
+            if name == 'biases':
+                name = 'bias'
+            uni_vars[layer + layerno + '/' + name + ':' + varno] = v
 
     # uni_targets.update(uni_vars)
-    # grads = []
-    # for name, var in uni_vars.items():
-    #     _g = tf.gradients(uni_targets['loss'], var)
+    grads = []
+    for name, var in uni_vars.items():
+        _g = tf.gradients(uni_targets['loss'], var)
     #     uni_targets['grad_' + name] = _g
-    #     grads.append([name, _g[0]])
+        grads.append([name, _g[0] == None])
 
-    run(bench_targets, uni_targets, nsteps=100, check_close=True)
+    #print(G.node['conv_1']['tf_cell'].get_output(1).op.name)
+    print(grads)
+    return G, uni_targets, bench_targets
+    #run(bench_targets, uni_targets, nsteps=100, check_close=True)
 
 
 def train_uni_alexnet(imagenet):
@@ -203,12 +214,12 @@ def run(bench_targets, uni_targets, nsteps=100, check_close=True):
 if __name__ == '__main__':
     mnist = setup.get_mnist_data()
 
-    # test_mnist_fc(mnist)
-
-    # tf.reset_default_graph()
-    # test_mnist_conv(mnist)
+    test_mnist_fc(mnist)
 
     tf.reset_default_graph()
-    imagenet = setup.get_imagenet()
-    test_alexnet(imagenet)
+    test_mnist_conv(mnist)
+
+    #tf.reset_default_graph()
+    #imagenet = setup.get_imagenet()
+    #test_alexnet(imagenet)
     # train_uni_alexnet(imagenet)

@@ -105,22 +105,22 @@ class GenFuncCell(RNNCell):
 
     def __call__(self, input_, curstate):
         # with tf.variable_scope(self._scope):
-        print('GenFuncCell call of node %s' % (self._scope))
+        #print('GenFuncCell call of node %s' % (self._scope))
 
         # Check to see if input node:
         if len(input_) == 0:
             state = self.get_state()
-            print()
+            #print()
             return state, state
 
         # Input is a dict {'nickname':Tensor}
         prev = self.harbor(input_)
 
-        print('  Using Harbor output:', prev)
-        print('  GenFuncCell of node %s >>  post-Harbor size %s' % (
-            self._scope,
-            prev.get_shape().as_list())
-        )
+        #print('  Using Harbor output:', prev)
+        #print('  GenFuncCell of node %s >>  post-Harbor size %s' % (
+        #    self._scope,
+        #    prev.get_shape().as_list())
+        #)
 
         # Each before-the-memory function, when run, will update the prev
         # value and pass that to the next function
@@ -132,30 +132,30 @@ class GenFuncCell(RNNCell):
             if 'name' in self._state_fs_kwargs[f]:
                 if '__f' not in self._state_fs_kwargs[f]['name']:
                     self._state_fs_kwargs[f]['name'] += '__f%s' % (f)
-                    print('-->', self._state_fs_kwargs[f]['name'])
+                    #print('-->', self._state_fs_kwargs[f]['name'])
             cur_f_args = self._state_fs_kwargs[f]
             # Plug in the input and open up the kwargs into the arguments
             # of the current function, and collect the output
             prev = cur_f(prev, **cur_f_args)
 
-        print('  GenFuncCell of node %s >>  post-state size %s' % (
-            self._scope,
-            prev.get_shape().as_list())
-        )
+        #print('  GenFuncCell of node %s >>  post-state size %s' % (
+        #    self._scope,
+        #    prev.get_shape().as_list())
+        #)
 
-        print('  GenFuncCell of node %s >>  pre-memory state size %s' % (
-            self._scope,
-            self.get_state().get_shape().as_list())
-        )
-        # Now, we update the memory!
+        #print('  GenFuncCell of node %s >>  pre-memory state size %s' % (
+        #    self._scope,
+        #    self.get_state().get_shape().as_list())
+        #)
+        # Now, we update the memory!        
         new_state = self.memory(state=curstate,
                                 in_layer=prev,
                                 **self._memory_kwargs)
 
-        print('  GenFuncCell of node %s >>  post-memory state size %s' % (
-            self._scope,
-            new_state.get_shape().as_list())
-        )
+        #print('  GenFuncCell of node %s >>  post-memory state size %s' % (
+        #    self._scope,
+        #    new_state.get_shape().as_list())
+        #)
 
         new_output = new_state
         # Each after-the-memory function, when run, will update the
@@ -170,10 +170,10 @@ class GenFuncCell(RNNCell):
             # of the current function, and collect the output
             new_output = cur_f(new_output, **cur_f_args)
 
-        print('  GenFuncCell of node %s >>  post-out-func size %s\n' % (
-            self._scope,
-            new_output.get_shape().as_list())
-        )
+        #print('  GenFuncCell of node %s >>  post-out-func size %s\n' % (
+        #    self._scope,
+        #    new_output.get_shape().as_list())
+        #)
 
         return new_output, new_state
 
@@ -183,12 +183,12 @@ class GenFuncCell(RNNCell):
             raise Exception('GenFuncCell trying to access nonexistent state')
         return self.states[-t - 1]
 
-    def get_output(self, t=0):
+    def get_output(self, t=-1):
         # Return the topmost state or -t_th state (0 is current, 1 is previous)
-        if t > len(self.outputs) - 1:
+        if not self.outputs:
             # raise Exception('GenFuncCell accessing nonexistent output')
             return self.zero_state()
-        return self.outputs[-t - 1]
+        return self.outputs[t]
 
     def update_states(self, new):
         self.states.append(new)
@@ -207,11 +207,12 @@ class GenFuncCell(RNNCell):
                               shape=1,
                               trainable=trainable,
                               name='decay_param_%s' % (self._scope))
-        print('    %s MEMORY CALLED! Decay param name: %s' % (
-            self._scope, mem.name))
+        #print('    %s MEMORY CALLED! Decay param name: %s' % (
+        #    self._scope, mem.name))
         # decay_factor = tf.sigmoid(mem)
         # new = tf.mul(state, decay_factor) + in_layer
-        new = tf.multiply(state, mem) + in_layer
+        new = tf.add(tf.multiply(state, mem, name='mem_mult_for_%s' % self._scope),
+                     in_layer, name='mem_add_for_%s' % self._scope)
         return new
 
     def fc(self, input_, output_size, init, bias=1, dropout=0, seed=None):
@@ -270,7 +271,8 @@ class GenFuncCell(RNNCell):
         conv = tf.nn.conv2d(in_layer,
                             kernel,
                             strides=[1, stride, stride, 1],
-                            padding=padding)
+                            padding=padding,
+                            name='intermediate_%s' % (self._scope))
 
         biases = tf.get_variable(initializer=tf.constant_initializer(bias),
                                  shape=[out_shape],
