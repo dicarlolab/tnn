@@ -107,11 +107,11 @@ class Harbor(object):
             #    print ' +- ', i
             if len(big_input_list[0].get_shape().as_list()) == 4:
                 out = tf.concat(big_input_list, axis=3, name=self.name +
-                                '_harbor_concat')
+                                    '_harbor_concat')
             # If not image:
             else:
                 out = tf.concat(big_input_list, axis=1, name=self.name +
-                                '_harbor_concat')
+                                    '_harbor_concat')
         elif self.combination_type == 'sum':
             out = tf.add_n(big_input_list, name=self.name + '_harbor_sum')
 
@@ -225,11 +225,16 @@ class Policy(object):
         For more general description of helper functions see comment in the
         choice_final_tensor function
         """
-
         if return_desired_size:
             # Find the shape size of the input with the longest path:
-            long_shape = max(incoming_sizes.items(),
-                             key=lambda x: max(len(t) for t in x[1]))[1][0]
+            shapes = []
+            for shape, paths in incoming_sizes.values():
+                if len(paths) > 0:
+                    le = max(len(p) for p in paths)
+                else:
+                    le = 0
+                shapes.append([shape, le])
+            long_shape = max(shapes, key=lambda x: x[1])[0]
             if len(long_shape) == 3:
                 long_shape = [long_shape[0],
                               int((long_shape[2])**0.5),
@@ -299,7 +304,7 @@ class Policy(object):
                     dim = len(input_shape[1:-1])
                     out = (tf.reshape(input_tensor, [-1] + input_shape[-dim:]))
                     for i in range(dim, 0, -1):
-                        out = tf.concat(i, [out, tf.zeros_like(out)])
+                        out = tf.concat([out, tf.zeros_like(out)], axis=i)
                     out_size = [-1] \
                         + [s * up_mult for s in input_shape[1:-1]] \
                         + [input_shape[-1]]

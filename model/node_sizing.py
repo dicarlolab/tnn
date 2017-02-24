@@ -125,7 +125,11 @@ def all_node_size_find(G,
                             desired_size, current_info['functions'])
 
                     # Find the size of the output (same as state for now):
-                    current_out_size = current_state_size[:]
+                    if 'out_fs' in current_info:
+                        current_out_size = utility_functions.chain_size_crunch(
+                                current_state_size, current_info['out_fs'])
+                    else:
+                        current_out_size = current_state_size[:]
 
                     # Update node_out_size and node_state_size
                     G.node[node]['output_size'] = current_out_size[:]
@@ -144,10 +148,11 @@ def all_node_size_find(G,
                     continue
 
     dbgr()
-    dbgr('Final Node Output Sizes:', newline=False)
+    dbgr('Final Node State and Output Sizes:', newline=False)
     for i in sorted(G.nodes()):
-        dbgr('   ' + i.ljust(max([len(j) for j in G.nodes()]))
-             + ':' + str(G.node[i]['output_size']), newline=False)
+        dbgr('   ' + i.ljust(max([len(j) for j in G.nodes()])) +
+             ':' + str(G.node[i]['state_size']) +
+             '   ' + str(G.node[i]['output_size']), newline=False)
     dbgr(newline=False)
 
     dbgr('\nAll sizes calculated!')
