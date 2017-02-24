@@ -190,7 +190,7 @@ class GenFuncCell(RNNCell):
     def get_output(self, t=None):
         # Return the topmost state or -t_th state (0 is current, 1 is previous)
         if t is not None and t < 0:
-            return self.zero_state()
+            return self.zero_output()
         elif t is None:
             t = -1
         elif t > len(self.states) - 1:
@@ -291,3 +291,6 @@ class GenFuncCell(RNNCell):
 
     def zero_state(self):
         return tf.zeros(self._state_size)
+
+    def zero_output(self):
+        return tf.zeros(self._output_size)

@@ -72,6 +72,7 @@ def unroller_call(input_sequence, G, ntimes=None, last=None):
                 inputs = {p: G.node[p]['tf_cell'].get_output(t-1) for p in preds}
                 # Compute output and state
                 curstate = G.node[node]['tf_cell'].get_state()
+                # if node == 'conv_3': import pdb; pdb.set_trace()
                 out, state = G.node[node]['tf_cell'](inputs, curstate)
                 G.node[node]['tf_cell'].update_outputs(out)
                 G.node[node]['tf_cell'].update_states(state)

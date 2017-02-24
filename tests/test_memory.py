@@ -73,6 +73,25 @@ def test_bypass():
                    'fc8': G.node['fc_8']['tf_cell'].get_output(),
                    'loss': tf.reduce_mean(uni_loss)
                    }
+
+    assert G.node['conv_1']['tf_cell'].get_state().shape.as_list() == [BATCH_SIZE, 54, 54, 96]
+    assert G.node['conv_2']['tf_cell'].get_state().shape.as_list() == [BATCH_SIZE, 27, 27, 256]
+    assert G.node['conv_3']['tf_cell'].get_state().shape.as_list() == [BATCH_SIZE, 14, 14, 384]
+    assert G.node['conv_4']['tf_cell'].get_state().shape.as_list() == [BATCH_SIZE, 14, 14, 256]
+    assert G.node['conv_5']['tf_cell'].get_state().shape.as_list() == [BATCH_SIZE, 14, 14, 256]
+    assert G.node['fc_6']['tf_cell'].get_state().shape.as_list() == [BATCH_SIZE, 4096]
+    assert G.node['fc_7']['tf_cell'].get_state().shape.as_list() == [BATCH_SIZE, 4096]
+    assert G.node['fc_8']['tf_cell'].get_state().shape.as_list() == [BATCH_SIZE, 1000]
+
+    assert uni_targets['conv1'].shape.as_list() == [BATCH_SIZE, 27, 27, 96]
+    assert uni_targets['conv2'].shape.as_list() == [BATCH_SIZE, 14, 14, 256]
+    assert uni_targets['conv3'].shape.as_list() == [BATCH_SIZE, 14, 14, 384]
+    assert uni_targets['conv4'].shape.as_list() == [BATCH_SIZE, 14, 14, 256]
+    assert uni_targets['conv5'].shape.as_list() == [BATCH_SIZE, 7, 7, 256]
+    assert uni_targets['fc6'].shape.as_list() == [BATCH_SIZE, 4096]
+    assert uni_targets['fc7'].shape.as_list() == [BATCH_SIZE, 4096]
+    assert uni_targets['fc8'].shape.as_list() == [BATCH_SIZE, 1000]
+
     graph = tf.get_default_graph()
     harbor = graph.get_tensor_by_name('unicycle/conv_1_harbor_concat:0')
     assert harbor.shape.as_list() == [BATCH_SIZE, 224, 224, 3]
@@ -90,6 +109,17 @@ def test_bypass():
     assert harbor.shape.as_list() == [BATCH_SIZE, 4096]
     harbor = graph.get_tensor_by_name('unicycle/fc_8_harbor_concat:0')
     assert harbor.shape.as_list() == [BATCH_SIZE, 4096]
+
+    conv3h = graph.get_tensor_by_name('unicycle/conv_3_harbor_concat:0')
+    conv1o = G.node['conv_1']['tf_cell'].get_output()
+    conv1om = tf.nn.max_pool(conv1o, ksize=[1,3,3,1], strides=[1,2,2,1], padding='SAME')
+    conv2o = G.node['conv_2']['tf_cell'].get_output()
+    # import pdb; pdb.set_trace()
+    concat = tf.concat([conv2o, conv1om], axis=3)
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        conv3hr, concatr = sess.run([conv3h, concat])
+        assert np.array_equal(conv3hr, concatr)
 
 
 if __name__ == '__main__':

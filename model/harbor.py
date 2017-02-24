@@ -272,22 +272,24 @@ class Policy(object):
                     # Final size of pooling is f = (i-k)/s + 1,
                     # where i is the input size, k is the filter size, and s
                     # is the stride
-                    h_s = input_shape[1] // desired_size[1]
-                    w_s = input_shape[2] // desired_size[2]
+                    h_s = (input_shape[1] + 1) // desired_size[1]
+                    w_s = (input_shape[2] + 1) // desired_size[2]
                     strides = [1, h_s, w_s, 1]
 
-                    h_k = input_shape[1] - h_s * (desired_size[1] - 1)
-                    w_k = input_shape[2] - w_s * (desired_size[2] - 1)
+                    h_k = 3  # input_shape[1] - h_s * (desired_size[1] - 1)
+                    w_k = 3  # input_shape[2] - w_s * (desired_size[2] - 1)
                     ksize = [1, h_k, w_k, 1]
 
                     # maxpool
                     pool = tf.nn.max_pool(input_tensor,
                                           ksize=ksize,
                                           strides=strides,
-                                          padding='VALID',
+                                          padding='SAME',
                                           name=self.name
                                           + '_' + input_nickname
                                           + '_harbor_maxpool')
+                    # if self.name == 'conv_3' and input_nickname == 'conv_1':
+                    #     import pdb; pdb.set_trace()
 
                    # print '  >> Harbor Policy of %s - resizing %s, want %s and got %s' % \
                    #     (self.name,
