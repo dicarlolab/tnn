@@ -147,7 +147,7 @@ class GenFuncCell(RNNCell):
         #    self._scope,
         #    self.get_state().get_shape().as_list())
         #)
-        # Now, we update the memory!        
+        # Now, we update the memory!
         new_state = self.memory(state=curstate,
                                 in_layer=prev,
                                 **self._memory_kwargs)

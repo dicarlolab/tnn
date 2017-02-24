@@ -28,14 +28,22 @@ def initialize_nodes(G, fetch_func=fetch_node, train=False):
                                        G.node[node]['harbor'].desired_size,
                                        node,
                                        train=train)
+        if 'out_fs' in current_info:
+            ofk = assemble_function_kwargs(current_info['out_fs'],
+                                        G.node[node]['harbor'].desired_size,
+                                        node,
+                                        train=train)
+        else:
+            ofk = []
 
         # Let's initiate TF Node:
         tf_node = GenFuncCell(harbor=G.node[node]['harbor'],
                               state_fs=[str(f['type'])
                                         for f in current_info['functions']],
-                              out_fs=[],
+                              out_fs=[str(f['type'])
+                                        for f in current_info.get('out_fs', [])],
                               state_fs_kwargs=sfk,
-                              out_fs_kwargs=[],
+                              out_fs_kwargs=ofk,
                               memory_kwargs=current_info.get('memory', {}),
                               output_size=G.node[node]['output_size'],
                               state_size=G.node[node]['state_size'],

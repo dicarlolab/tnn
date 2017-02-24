@@ -285,7 +285,7 @@ def mnist_benchmark(inputs, **kwargs):
     fc2_biases = tf.get_variable('fcb2', initializer=tf.constant(0.1,
                                                                  shape=[NUM_LABELS],
                                                                  dtype=tf.float32))
-    
+
     """The Model definition."""
 
     # Fully connected layer. Note that the '+' operation automatically

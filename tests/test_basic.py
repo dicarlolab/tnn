@@ -1,4 +1,4 @@
-import sys, time
+import sys, os, time
 
 import numpy as np
 import tensorflow as tf
@@ -10,10 +10,9 @@ from unicycle import Unicycle
 
 BATCH_SIZE = 256
 
-
-import os
 codedir = os.path.dirname(os.path.abspath(__file__))
 projdir = os.path.split(codedir)[0]
+
 
 def test_mnist_fc(mnist):
     # initialize the benchmark model
