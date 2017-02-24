@@ -69,7 +69,7 @@ def unroller_call(input_sequence, G, ntimes=None, last=None):
                 G.node[node]['tf_cell'].update_states(
                     input_sequence['images'][t] if input_is_list else input_sequence['images'])
             else:
-                inputs = {p: G.node[p]['tf_cell'].get_output(t) for p in preds}
+                inputs = {p: G.node[p]['tf_cell'].get_output(t-1) for p in preds}
                 # Compute output and state
                 curstate = G.node[node]['tf_cell'].get_state()
                 out, state = G.node[node]['tf_cell'](inputs, curstate)

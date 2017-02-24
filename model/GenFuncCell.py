@@ -89,11 +89,11 @@ class GenFuncCell(RNNCell):
         # States and outputs
         self._output_size = output_size if isinstance(output_size, type([])) \
             else output_size.as_list()
-        self.outputs = [tf.zeros(self._output_size)]
+        self.outputs = []
 
         self._state_size = state_size if isinstance(state_size, type([])) \
             else state_size.as_list()
-        self.states = [tf.zeros(self._state_size)]
+        self.states = []
 
         # ====== HARBOR AND MISC SETUP: ======================================
 
@@ -177,17 +177,24 @@ class GenFuncCell(RNNCell):
 
         return new_output, new_state
 
-    def get_state(self, t=0):
+    def get_state(self, t=None):
         # Return the topmost state or -t_th state (0 is current, 1 is previous)
-        if t > len(self.states) - 1:
-            raise Exception('GenFuncCell trying to access nonexistent state')
-        return self.states[-t - 1]
-
-    def get_output(self, t=-1):
-        # Return the topmost state or -t_th state (0 is current, 1 is previous)
-        if not self.outputs:
-            # raise Exception('GenFuncCell accessing nonexistent output')
+        if (t is not None and t < 0) or not self.states:
             return self.zero_state()
+        elif t is None:
+            t = -1
+        elif t > len(self.states) - 1:
+            raise Exception('GenFuncCell trying to access nonexistent state')
+        return self.states[t]
+
+    def get_output(self, t=None):
+        # Return the topmost state or -t_th state (0 is current, 1 is previous)
+        if t is not None and t < 0:
+            return self.zero_state()
+        elif t is None:
+            t = -1
+        elif t > len(self.states) - 1:
+            raise Exception('GenFuncCell trying to access nonexistent output')
         return self.outputs[t]
 
     def update_states(self, new):
