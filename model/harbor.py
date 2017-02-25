@@ -1,6 +1,7 @@
 """
 Harbor Class Definition
 """
+from collections import OrderedDict
 import tensorflow as tf
 import numpy as np
 
@@ -105,6 +106,9 @@ class Harbor(object):
             #print ' Harbor post-policy inputs:'
             #for i in big_input_list:
             #    print ' +- ', i
+            big_input_dict = {k:v for k,v in zip(inputs, big_input_list)}
+            big_input_list = [v for k,v in sorted(big_input_dict.items())]
+
             if len(big_input_list[0].get_shape().as_list()) == 4:
                 out = tf.concat(big_input_list, axis=3, name=self.name +
                                     '_harbor_concat')
@@ -259,7 +263,7 @@ class Policy(object):
                     input_shape = input_tensor.get_shape().as_list()
 
                 # If the shape of the current input is the desired shape, pass:
-                if input_shape == desired_size:
+                if input_shape[1] == desired_size[1] and input_shape[2] == desired_size[2]:
                     return input_tensor
 
                 # If the shape of the current input is more than the desired
@@ -276,8 +280,8 @@ class Policy(object):
                     w_s = (input_shape[2] + 1) // desired_size[2]
                     strides = [1, h_s, w_s, 1]
 
-                    h_k = 3  # input_shape[1] - h_s * (desired_size[1] - 1)
-                    w_k = 3  # input_shape[2] - w_s * (desired_size[2] - 1)
+                    h_k = h_s + 1  # input_shape[1] - h_s * (desired_size[1] - 1)
+                    w_k = w_s + 1  # input_shape[2] - w_s * (desired_size[2] - 1)
                     ksize = [1, h_k, w_k, 1]
 
                     # maxpool
