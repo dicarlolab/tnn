@@ -52,14 +52,7 @@ def test_memory(mnist):
     sess.close()
 
 
-def test_bypass():
-    images = tf.truncated_normal([BATCH_SIZE, 224, 224, 3], seed=SEED)
-
-    with tf.variable_scope('unicycle'):
-        unicycle_model = Unicycle()
-        G = unicycle_model.build(json_file_name='json/sample_alexnet_bypass_test.json')
-        out = unicycle_model({'images': images}, G)
-
+def test_state_and_output_sizes(G):
     assert G.node['conv_1']['tf_cell'].get_state().shape.as_list() == [BATCH_SIZE, 54, 54, 96]
     assert G.node['conv_2']['tf_cell'].get_state().shape.as_list() == [BATCH_SIZE, 27, 27, 256]
     assert G.node['conv_3']['tf_cell'].get_state().shape.as_list() == [BATCH_SIZE, 14, 14, 384]
@@ -78,7 +71,20 @@ def test_bypass():
     assert G.node['fc_7']['tf_cell'].get_output().shape.as_list() == [BATCH_SIZE, 4096]
     assert G.node['fc_8']['tf_cell'].get_output().shape.as_list() == [BATCH_SIZE, 1000]
 
+
+def test_bypass():
+    images = tf.truncated_normal([BATCH_SIZE, 224, 224, 3], seed=SEED)
+
+    with tf.variable_scope('unicycle'):
+        unicycle_model = Unicycle()
+        G = unicycle_model.build(json_file_name='json/sample_alexnet_bypass_test.json')
+        out = unicycle_model({'images': images}, G)
+
+    test_state_and_output_sizes(G)
+
     graph = tf.get_default_graph()
+
+    # harbor output sizes
     harbor = graph.get_tensor_by_name('unicycle/conv_1_harbor_concat:0')
     assert harbor.shape.as_list() == [BATCH_SIZE, 224, 224, 3]
     harbor = graph.get_tensor_by_name('unicycle/conv_2_harbor_concat:0')
@@ -124,8 +130,70 @@ def test_bypass():
         assert np.array_equal(conv5hr, concatr)
 
 
+def test_feedback():
+    images = tf.truncated_normal([BATCH_SIZE, 224, 224, 3], seed=SEED)
+
+    with tf.variable_scope('unicycle'):
+        unicycle_model = Unicycle()
+        G = unicycle_model.build(json_file_name='json/sample_alexnet_feedback_test.json')
+        out = unicycle_model({'images': images}, G)
+
+    test_state_and_output_sizes(G)
+
+    graph = tf.get_default_graph()
+
+    # harbor output sizes
+    harbor = graph.get_tensor_by_name('unicycle/conv_1_harbor_concat:0')
+    assert harbor.shape.as_list() == [BATCH_SIZE, 224, 224, 3]
+    harbor = graph.get_tensor_by_name('unicycle/conv_2_harbor_concat:0')
+    assert harbor.shape.as_list() == [BATCH_SIZE, 27, 27, 96]
+    harbor = graph.get_tensor_by_name('unicycle/conv_3_harbor_concat:0')
+    assert harbor.shape.as_list() == [BATCH_SIZE, 14, 14, 256+256+256]
+    harbor = graph.get_tensor_by_name('unicycle/conv_4_harbor_concat:0')
+    assert harbor.shape.as_list() == [BATCH_SIZE, 14, 14, 384+256]
+    harbor = graph.get_tensor_by_name('unicycle/conv_5_harbor_concat:0')
+    assert harbor.shape.as_list() == [BATCH_SIZE, 14, 14, 256]
+    harbor = graph.get_tensor_by_name('unicycle/fc_6_harbor_concat:0')
+    assert harbor.shape.as_list() == [BATCH_SIZE, 7, 7, 256]
+    harbor = graph.get_tensor_by_name('unicycle/fc_7_harbor_concat:0')
+    assert harbor.shape.as_list() == [BATCH_SIZE, 4096]
+    harbor = graph.get_tensor_by_name('unicycle/fc_8_harbor_concat:0')
+    assert harbor.shape.as_list() == [BATCH_SIZE, 4096]
+
+    # check if harbor outputs at t are equal to the concat of outputs
+    # from incoming nodes at t-1
+
+    # layer 4 gets inputs from 5 and 3
+    conv4h = graph.get_tensor_by_name('unicycle/conv_4_harbor_concat_5:0')
+    conv3o = G.node['conv_3']['tf_cell'].outputs[4]
+    conv5o = G.node['conv_5']['tf_cell'].outputs[4]
+    conv5om = tf.image.resize_images(conv5o, conv4h.shape.as_list()[1:3])
+
+    concat = tf.concat([conv3o, conv5om], axis=3)
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        conv4hr, concatr = sess.run([conv4h, concat])
+        assert np.array_equal(conv4hr, concatr)
+
+    # layer 3 gets inputs from 2, 4, 5
+    conv3h = graph.get_tensor_by_name('unicycle/conv_3_harbor_concat_7:0')
+    conv2o = G.node['conv_2']['tf_cell'].outputs[6]
+    conv5o = G.node['conv_5']['tf_cell'].outputs[6]
+    conv5om = tf.image.resize_images(conv5o, conv3h.shape.as_list()[1:3])
+    conv4o = G.node['conv_4']['tf_cell'].outputs[6]
+    conv4om = tf.image.resize_images(conv4o, conv3h.shape.as_list()[1:3])
+
+    concat = tf.concat([conv2o, conv4om, conv5om], axis=3)
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        conv3hr, concatr = sess.run([conv3h, concat])
+        assert np.array_equal(conv3hr, concatr)
+
+
+
 if __name__ == '__main__':
     # mnist = setup.get_mnist_data()
     # test_memory(mnist)
 
-    test_bypass()
+    # test_bypass()
+    test_feedback()

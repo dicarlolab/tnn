@@ -305,16 +305,17 @@ class Policy(object):
 
                 # Otherwise, we upscale
                 else:
-                    up_mult = desired_size[1] // input_shape[1]
-                    # Unpool
-                    dim = len(input_shape[1:-1])
-                    out = (tf.reshape(input_tensor, [-1] + input_shape[-dim:]))
-                    for i in range(dim, 0, -1):
-                        out = tf.concat([out, tf.zeros_like(out)], axis=i)
-                    out_size = [-1] \
-                        + [s * up_mult for s in input_shape[1:-1]] \
-                        + [input_shape[-1]]
-                    out = tf.reshape(out, out_size)
+                    # up_mult = desired_size[1] // input_shape[1]
+                    out = tf.image.resize_images(input_tensor, desired_size[1:3])
+                    # # Unpool
+                    # dim = len(input_shape[1:-1])
+                    # out = (tf.reshape(input_tensor, [-1] + input_shape[-dim:]))
+                    # for i in range(dim, 0, -1):
+                    #     out = tf.concat([out, tf.zeros_like(out)], axis=i)
+                    # out_size = [-1] \
+                    #     + [s * up_mult for s in input_shape[1:-1]] \
+                    #     + [input_shape[-1]]
+                    # out = tf.reshape(out, out_size)
                     return out
 
             # If the number of dimensions is 2:
