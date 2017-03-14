@@ -6,57 +6,75 @@ from __future__ import absolute_import, division, print_function
 
 import re
 import math
-
+import numpy as np
 import tensorflow as tf
 from tensorflow.contrib.rnn import RNNCell
 
 import tfutils.model
 
 
-def harbor(inputs, shape, reuse=None):
+class DefaultHarbor():
     """
-    Default harbor function that resizes inputs to desired shape and concats them.
+    Default harbor class that resizes inputs to desired shape and concats them.
 
     :Args:
         - inputs
         - shape
     """
-    outputs = []
-    for inp in inputs:
-        if len(shape) == 2:
-            if len(inp.shape) == 2:
-                outputs.append(inp)
-            elif len(inp.shape) == 4:
-                out = tf.reshape(inp, [inp.get_shape().as_list()[0], -1])
+    def policy(self, in_shapes, shape):
+        nchnls = []
+        if len(shape) == 4:
+            for shp in in_shapes:
+                if len(shp) == 4:
+                    c  = shp[-1]
+                elif len(shp) == 2:
+                    xs, ys = shape[1: 3]
+                    s = shp[1]
+                    c = int(math.ceil(s / float(xs * ys)))
+                nchnls.append(c)
+        elif len(shape) == 2:
+            for shp in in_shapes:
+                c = np.prod(shp[1:])
+                nchnls.append(c)
+        return shape[:-1] + [sum(nchnls)]
+                    
+    def __call__(self, inputs, shape, reuse=None):
+        outputs = []
+        for inp in inputs:
+            if len(shape) == 2:
+                if len(inp.shape) == 2:
+                    outputs.append(inp)
+                elif len(inp.shape) == 4:
+                    out = tf.reshape(inp, [inp.get_shape().as_list()[0], -1])
+                    outputs.append(out)
+                else:
+                    raise ValueError
+
+            elif len(shape) == 4:
+                pat = re.compile(':|/')
+                if len(inp.shape) == 2:
+                    xs, ys = shape[1: 3]
+                    s = inp.shape.as_list()[1]
+                    nchnls = int(math.ceil(s / float(xs * ys)))
+                    if s % (xs * ys) != 0:
+                        out_depth = xs * ys * nchnls
+                        nm = pat.sub('__', inp.name.split('/')[1].split('_')[0])
+                        nm = 'harbor_imsizefc_for_%s' % nm
+                        with tf.variable_scope(nm, reuse=reuse):
+                            inp = tfutils.model.fc(inp, out_depth)
+                    out = tf.reshape(inp, (inp.shape.as_list()[0], xs, ys, nchnls))
+                elif len(inp.shape) == 4:
+                    out = tf.image.resize_images(inp, shape[1:3])
+                else:
+                    raise ValueError
                 outputs.append(out)
+
             else:
-                raise ValueError
+                raise ValueError('harbor cannot process layer of dim {}'.format(len(shape)))
 
-        elif len(shape) == 4:
-            pat = re.compile(':|/')
-            if len(inp.shape) == 2:
-                xs, ys = shape[1: 3]
-                s = inp.shape.as_list()[1]
-                nchnls = int(math.ceil(s / float(xs * ys)))
-                if s % (xs * ys) != 0:
-                    out_depth = xs * ys * nchnls
-                    nm = pat.sub('__', inp.name.split('/')[1].split('_')[0])
-                    nm = 'harbor_imsizefc_for_%s' % nm
-                    with tf.variable_scope(nm, reuse=reuse):
-                        inp = tfutils.model.fc(inp, out_depth)
-                out = tf.reshape(inp, (inp.shape.as_list()[0], xs, ys, nchnls))
-            elif len(inp.shape) == 4:
-                out = tf.image.resize_images(inp, shape[1:3])
-            else:
-                raise ValueError
-            outputs.append(out)
+        output = tf.concat(outputs, axis=-1, name='harbor')
 
-        else:
-            raise ValueError('harbor cannot process layer of dim {}'.format(len(shape)))
-
-    output = tf.concat(outputs, axis=-1, name='harbor')
-
-    return output
+        return output
 
 
 def memory(inp, state, memory_decay=0, trainable=False, name='memory'):
@@ -77,7 +95,7 @@ class GenFuncCell(RNNCell):
 
     def __init__(self,
                  harbor_shape,
-                 harbor=(harbor, None),
+                 harbor_class=(DefaultHarbor, None),
                  pre_memory=None,
                  memory=(memory, None),
                  post_memory=None,
@@ -88,7 +106,8 @@ class GenFuncCell(RNNCell):
                  ):
 
         self.harbor_shape = harbor_shape
-        self.harbor = harbor if harbor[1] is not None else (harbor[0], {})
+        self.harbor_class = harbor_class if harbor_class[1] is not None else (harbor_class[0], {})
+        self.harbor = self.harbor_class[0](**self.harbor_class[1])
         self.pre_memory = pre_memory
         self.memory = memory if memory[1] is not None else (memory[0], {})
         self.post_memory = post_memory
@@ -132,7 +151,7 @@ class GenFuncCell(RNNCell):
             if inputs is None:
                 inputs = [self.input_init[0](shape=self.harbor_shape,
                                              **self.input_init[1])]
-            harbor_output = self.harbor[0](inputs, self.harbor_shape, reuse=self._reuse, **self.harbor[1])
+            harbor_output = self.harbor(inputs, self.harbor_shape, reuse=self._reuse)
             
             for function, kwargs in self.pre_memory:
                 output = function(harbor_output, **kwargs)

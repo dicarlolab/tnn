@@ -7,7 +7,6 @@ import math
 
 import networkx as nx
 import tensorflow as tf
-import numpy as np
 
 import tfutils.model
 import tnn.cell
@@ -65,7 +64,7 @@ def graph_from_json(json_file_name):
 
         attr['cell'] = tnn.cell.GenFuncCell
         attr['kwargs'] = {}
-        attr['kwargs']['harbor'] = _get_func_from_kwargs(**json_node['harbor'])
+        attr['kwargs']['harbor_class'] = _get_func_from_kwargs(**json_node['harbor_class'])
         attr['kwargs']['pre_memory'] = []
         for kwargs in json_node['pre_memory']:
             attr['kwargs']['pre_memory'].append(_get_func_from_kwargs(**kwargs))
@@ -120,28 +119,12 @@ def init_nodes(G, batch_size=256):
     # now correct harbor sizes to the final sizes and initialize cells
     for node, attr in G.nodes(data=True):
         if node not in input_nodes:
-            pred_shapes = [G.node[pred]['output_shape'] for pred in G.predecessors(node)]
-            attr['kwargs']['harbor_shape'] = harbor_policy(pred_shapes,
+            pred_shapes = [G.node[pred]['output_shape'] for pred in sorted(G.predecessors(node))]
+            harbor_class = attr['kwargs']['harbor_class']
+            harbor = harbor_class[0](**harbor_class[1])
+            attr['kwargs']['harbor_shape'] = harbor.policy(pred_shapes,
                                                            attr['kwargs']['harbor_shape'])
         attr['cell'] = attr['cell'](**attr['kwargs'])
-
-
-def harbor_policy(in_shapes, shape):
-    nchnls = []
-    if len(shape) == 4:
-        for shp in in_shapes:
-            if len(shp) == 4:
-                c  = shp[-1]
-            elif len(shp) == 2:
-                xs, ys = shape[1: 3]
-                s = shp[1]
-                c = int(math.ceil(s / float(xs * ys)))
-            nchnls.append(c)
-    elif len(shape) == 2:
-        for shp in in_shapes:
-            c = np.prod(shp[1:])
-            nchnls.append(c)
-    return shape[:-1] + [sum(nchnls)]
 
 
 def unroll(G, input_seq, ntimes=None):
@@ -186,16 +169,13 @@ def unroll(G, input_seq, ntimes=None):
                 if node in input_nodes:
                     inputs.append(input_seq[t])
                 else:
-                    #for pred in sorted(G.predecessors(node)):
-                    #    inputs.append(None)
                     for pred in sorted(G.predecessors(node)):
                         cell = G.node[pred]['cell']
                         output_shape = G.node[pred]['output_shape']
                         _inp = cell.input_init[0](shape=output_shape,
                                                   name=pred + '/standin',
                                                   **cell.input_init[1])
-                        inputs.append(_inp)
-                        
+                        inputs.append(_inp)                        
                 if all([i is None for i in inputs]):
                     inputs = None
                 state = None

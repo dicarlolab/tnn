@@ -14,8 +14,8 @@
       "state_init": {
         "function": "zeros"
       },
-      "harbor": {
-        "function": "harbor"
+      "harbor_class": {
+        "function": "DefaultHarbor"
       },
       "pre_memory": [
         {
@@ -82,8 +82,8 @@
       "state_init": {
         "function": "zeros"
       },
-      "harbor": {
-        "function": "harbor"
+      "harbor_class": {
+        "function": "DefaultHarbor"
       },
       "pre_memory": [
         {
@@ -150,8 +150,8 @@
       "state_init": {
         "function": "zeros"
       },
-      "harbor": {
-        "function": "harbor"
+      "harbor_class": {
+        "function": "DefaultHarbor"
       },
       "pre_memory": [
         {
@@ -195,8 +195,8 @@
       "state_init": {
         "function": "zeros"
       },
-      "harbor": {
-        "function": "harbor"
+      "harbor_class": {
+        "function": "DefaultHarbor"
       },
       "pre_memory": [
         {
@@ -240,8 +240,8 @@
       "state_init": {
         "function": "zeros"
       },
-      "harbor": {
-        "function": "harbor"
+      "harbor_class": {
+        "function": "DefaultHarbor"
       },
       "pre_memory": [
         {
@@ -301,8 +301,8 @@
       "state_init": {
         "function": "zeros"
       },
-      "harbor": {
-        "function": "harbor"
+      "harbor_class": {
+        "function": "DefaultHarbor"
       },
       "pre_memory": [
         {
@@ -341,8 +341,8 @@
       "state_init": {
         "function": "zeros"
       },
-      "harbor": {
-        "function": "harbor"
+      "harbor_class": {
+        "function": "DefaultHarbor"
       },
       "pre_memory": [
         {
@@ -381,8 +381,8 @@
       "state_init": {
         "function": "zeros"
       },
-      "harbor": {
-        "function": "harbor"
+      "harbor_class": {
+        "function": "DefaultHarbor"
       },
       "pre_memory": [
         {
